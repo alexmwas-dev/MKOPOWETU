@@ -1,21 +1,33 @@
-# Okoa Loan App Blueprint
+# Okoaloan Blueprint
 
 ## Overview
 
-Okoa Loan is a Flutter-based mobile application that provides quick and easy loans to users. The app is designed to be user-friendly and secure, with a focus on providing a seamless user experience.
+Okoaloan is a mobile loan application built with Flutter. It allows users to apply for and manage loans.
 
-## Implemented Features
+## Style, Design, and Features
 
-*   **Splash Screen:** A visually appealing splash screen that displays for 4 seconds.
-*   **Intro Screen:** A multi-step intro screen that guides users through the app's features and required permissions.
-*   **Authentication:** Secure user authentication using Firebase.
-*   **Loan Application:** A simple and intuitive loan application process.
-*   **Loan Repayment:** A clear and concise loan repayment process.
-*   **User Profile:** A user profile page where users can view their loan history and other personal information.
-*   **Privacy Policy & Terms and Conditions:** Comprehensive privacy policy and terms and conditions pages.
-*   **Theme:** A modern and consistent theme with support for light and dark modes.
-*   **Ads:** Integration with Google Mobile Ads for monetization.
+### Implemented
 
-## Current Plan
+*   **Theme:** Light and dark themes with a consistent color scheme and typography using Google Fonts.
+*   **Navigation:** `go_router` for declarative routing.
+*   **State Management:** `provider` for managing application state.
+*   **Firebase Integration:**
+    *   Firebase Core
+    *   Firebase Authentication
+    *   Cloud Firestore
+    *   Firebase Database
+*   **UI Components:**
+    *   Custom-styled buttons and text fields.
+    *   Lottie animations for visual feedback.
 
-My current task is to update all the files in the `lib/src/providers` directory to improve their structure and functionality. I will start by updating the `auth_provider.dart` file.
+### Current Task: Fix Build Error
+
+**Plan:**
+
+1.  **DONE:** Attempt to downgrade the `firebase_app_distribution` plugin to a known stable version.
+2.  **DONE:** Override the Material Components library version in `android/build.gradle.kts` to resolve dependency conflicts.
+3.  **DONE:** Remove the `firebase_app_distribution` plugin entirely to isolate the build error.
+4.  **DONE:** Set the `minSdkVersion` to 21 in `android/app/build.gradle.kts` to support Android 5.0 and higher.
+5.  **DONE:** Clean up the Gradle files by reverting unnecessary changes.
+6.  **DONE:** Re-run the build to confirm the fix.
+
