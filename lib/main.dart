@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:okoa_loan/src/providers/auth_provider.dart';
+import 'package:okoa_loan/src/providers/connectivity_provider.dart';
 import 'package:okoa_loan/src/router/app_router.dart';
 import 'firebase_options.dart';
 
@@ -11,8 +13,12 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => ThemeProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => ThemeProvider()),
+        ChangeNotifierProvider(create: (context) => AuthProvider()),
+        ChangeNotifierProvider(create: (context) => ConnectivityProvider()),
+      ],
       child: const MyApp(),
     ),
   );

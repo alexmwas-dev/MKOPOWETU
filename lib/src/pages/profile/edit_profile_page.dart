@@ -132,7 +132,7 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                         lastDate: DateTime.now(),
                     );
                     if (picked != null) {
-                        _dobController.text = picked.toIso8601String().split('T').first;
+                      _dobController.text = picked.toIso8601String().split('T').first;
                     }
                 },
                 validator: (value) => value!.isEmpty ? 'Required' : null,

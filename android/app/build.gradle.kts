@@ -19,7 +19,7 @@ if (keyPropertiesFile.exists()) {
 
 android {
     namespace = "com.okoaloan.ke"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
