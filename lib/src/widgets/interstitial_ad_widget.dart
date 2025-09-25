@@ -1,11 +1,12 @@
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:mkopo_wetu/src/services/ad_manager.dart';
 
 class InterstitialAdWidget {
   InterstitialAd? _interstitialAd;
 
   void loadAd() {
     InterstitialAd.load(
-      adUnitId: 'ca-app-pub-3940256099942544/1033173712', // Test ad unit ID
+      adUnitId: AdManager.interstitialAdUnitId,
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
