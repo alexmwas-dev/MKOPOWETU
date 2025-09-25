@@ -1,5 +1,5 @@
-name: okoa_loan
-description: "A new Flutter project."
+name: mkopo_wetu
+description: "Mkopo Wetu"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -26,6 +26,8 @@ dependencies:
   firebase_database: ^12.0.2
   intl: ^0.20.2
   pinput: ^5.0.2
+  shared_preferences: ^2.5.3
+  introduction_screen: ^4.0.0
 
 dev_dependencies:
   flutter_test:

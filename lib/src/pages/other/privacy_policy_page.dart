@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:okoa_loan/src/services/ad_manager.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
+import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
 
 class PrivacyPolicyPage extends StatefulWidget {
   const PrivacyPolicyPage({super.key});
@@ -10,20 +11,15 @@ class PrivacyPolicyPage extends StatefulWidget {
 }
 
 class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
-
-  BannerAd? _bannerAd;
+  final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
 
   @override
   void initState() {
     super.initState();
-    _bannerAd = AdManager.getBannerAd();
-    _bannerAd?.load();
-  }
-
-  @override
-  void dispose() {
-    _bannerAd?.dispose();
-    super.dispose();
+    _interstitialAdWidget.loadAd();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _interstitialAdWidget.showAd();
+    });
   }
 
   @override
@@ -32,6 +28,16 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
       appBar: AppBar(
         title: const Text('Privacy Policy'),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/profile');
+            }
+          },
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -63,12 +69,12 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
               content:
                   'We take reasonable measures to protect your personal information from unauthorized access, use, or disclosure. However, no method of transmission over the internet or electronic storage is 100% secure.',
             ),
-             _buildPolicySection(
+            _buildPolicySection(
               title: '5. Your Rights',
               content:
-                  'You have the right to access, correct, or delete your personal information. You may also have the right to object to or restrict certain types of processing. To exercise these rights, please contact us at support@okoaloan.com.',
+                  'You have the right to access, correct, or delete your personal information. You may also have the right to object to or restrict certain types of processing. To exercise these rights, please contact us at support@mkopowetu.com.',
             ),
-             _buildPolicySection(
+            _buildPolicySection(
               title: '6. Changes to This Policy',
               content:
                   'We may update this Privacy Policy from time to time. Any changes will be effective immediately upon posting the updated policy in the application.',
@@ -76,13 +82,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
           ],
         ),
       ),
-      bottomNavigationBar: _bannerAd != null
-          ? SizedBox(
-              width: _bannerAd!.size.width.toDouble(),
-              height: _bannerAd!.size.height.toDouble(),
-              child: AdWidget(ad: _bannerAd!),
-            )
-          : const SizedBox.shrink(),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 

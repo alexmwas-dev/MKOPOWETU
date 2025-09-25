@@ -1,7 +1,11 @@
 import 'package:firebase_database/firebase_database.dart';
 
 class UserService {
-  final DatabaseReference _usersRef = FirebaseDatabase.instance.ref().child('users');
+  final DatabaseReference _usersRef = FirebaseDatabase.instanceFor(
+          app: FirebaseDatabase.instance.app,
+          databaseURL: 'https://mkopo-wetu-default-rtdb.firebaseio.com/')
+      .ref()
+      .child('users');
 
   Future<void> createUser(String uid, Map<String, dynamic> userData) async {
     await _usersRef.child(uid).set(userData);

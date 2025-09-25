@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:okoa_loan/src/services/ad_manager.dart';
+import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
 import 'package:provider/provider.dart';
-import 'package:okoa_loan/src/providers/auth_provider.dart';
+import 'package:mkopo_wetu/src/providers/auth_provider.dart';
+import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
 
 class FinancialDetailsPage extends StatefulWidget {
   const FinancialDetailsPage({super.key});
@@ -18,22 +18,21 @@ class _FinancialDetailsPageState extends State<FinancialDetailsPage> {
   final _monthlyIncomeController = TextEditingController();
   final _monthlyExpensesController = TextEditingController();
   bool _isLoading = false;
-  BannerAd? _bannerAd;
+  final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
 
   @override
   void initState() {
     super.initState();
-    _bannerAd = AdManager.getBannerAd();
-    _bannerAd?.load();
-
-    // Safely access the provider after the first frame
+    _interstitialAdWidget.loadAd();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _interstitialAdWidget.showAd();
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final user = authProvider.user;
       if (user != null) {
         _employmentStatusController.text = user.employmentStatus ?? '';
         _monthlyIncomeController.text = user.monthlyIncome?.toString() ?? '';
-        _monthlyExpensesController.text = user.monthlyExpenses?.toString() ?? '';
+        _monthlyExpensesController.text =
+            user.monthlyExpenses?.toString() ?? '';
         setState(() {});
       }
     });
@@ -41,7 +40,6 @@ class _FinancialDetailsPageState extends State<FinancialDetailsPage> {
 
   @override
   void dispose() {
-    _bannerAd?.dispose();
     _employmentStatusController.dispose();
     _monthlyIncomeController.dispose();
     _monthlyExpensesController.dispose();
@@ -53,7 +51,19 @@ class _FinancialDetailsPageState extends State<FinancialDetailsPage> {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Financial Details')),
+      appBar: AppBar(
+        title: const Text('Financial Details'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/profile');
+            }
+          },
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -68,7 +78,8 @@ class _FinancialDetailsPageState extends State<FinancialDetailsPage> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.work),
                 ),
-                validator: (value) => value!.isEmpty ? 'Please enter your employment status' : null,
+                validator: (value) =>
+                    value!.isEmpty ? 'Please enter your employment status.' : null,
               ),
               const SizedBox(height: 16.0),
               TextFormField(
@@ -80,8 +91,12 @@ class _FinancialDetailsPageState extends State<FinancialDetailsPage> {
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
-                  if (value!.isEmpty) return 'Please enter your monthly income';
-                  if (double.tryParse(value) == null) return 'Please enter a valid number';
+                  if (value!.isEmpty) {
+                    return 'Please enter your monthly income.';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'Please enter a valid amount.';
+                  }
                   return null;
                 },
               ),
@@ -95,8 +110,12 @@ class _FinancialDetailsPageState extends State<FinancialDetailsPage> {
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
-                  if (value!.isEmpty) return 'Please enter your monthly expenses';
-                  if (double.tryParse(value) == null) return 'Please enter a valid number';
+                  if (value!.isEmpty) {
+                    return 'Please enter your monthly expenses.';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'Please enter a valid amount.';
+                  }
                   return null;
                 },
               ),
@@ -108,38 +127,43 @@ class _FinancialDetailsPageState extends State<FinancialDetailsPage> {
                         if (_formKey.currentState!.validate()) {
                           setState(() => _isLoading = true);
                           try {
-                            await authProvider.updateFinancialDetails(
+                            await authProvider.updateFinancialInfo(
                               _employmentStatusController.text,
                               double.parse(_monthlyIncomeController.text),
                               double.parse(_monthlyExpensesController.text),
                             );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Financial details saved!')),
-                            );
-                            context.go('/profile'); // Navigate back to profile
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Your financial details have been saved successfully.')),
+                              );
+                              context.go('/profile');
+                            }
                           } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Failed to save details: ${e.toString()}')),
-                            );
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'An error occurred while saving your details. Please try again.')),
+                              );
+                            }
                           } finally {
-                            setState(() => _isLoading = false);
+                            if (mounted) {
+                              setState(() => _isLoading = false);
+                            }
                           }
                         }
                       },
-                      style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16.0)),
+                      style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16.0)),
                       child: const Text('Save & Continue'),
                     ),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: _bannerAd != null
-          ? SizedBox(
-              width: _bannerAd!.size.width.toDouble(),
-              height: _bannerAd!.size.height.toDouble(),
-              child: AdWidget(ad: _bannerAd!),
-            )
-          : const SizedBox.shrink(),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 }

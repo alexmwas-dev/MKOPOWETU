@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
-import 'package:okoa_loan/src/providers/auth_provider.dart';
-import 'package:okoa_loan/src/services/ad_manager.dart';
+import 'package:mkopo_wetu/src/providers/auth_provider.dart';
+import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
+import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -12,22 +12,24 @@ class EditProfilePage extends StatefulWidget {
   _EditProfilePageState createState() => _EditProfilePageState();
 }
 
-class _EditProfilePageState extends State<EditProfilePage> with SingleTickerProviderStateMixin {
+class _EditProfilePageState extends State<EditProfilePage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  BannerAd? _bannerAd;
+  final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _bannerAd = AdManager.getBannerAd();
-    _bannerAd?.load();
+    _interstitialAdWidget.loadAd();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _interstitialAdWidget.showAd();
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _bannerAd?.dispose();
     super.dispose();
   }
 
@@ -36,6 +38,16 @@ class _EditProfilePageState extends State<EditProfilePage> with SingleTickerProv
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Profile'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/profile');
+            }
+          },
+        ),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -51,13 +63,7 @@ class _EditProfilePageState extends State<EditProfilePage> with SingleTickerProv
           ResidentialDetailsForm(),
         ],
       ),
-      bottomNavigationBar: _bannerAd != null
-          ? SizedBox(
-              width: _bannerAd!.size.width.toDouble(),
-              height: _bannerAd!.size.height.toDouble(),
-              child: AdWidget(ad: _bannerAd!),
-            )
-          : const SizedBox.shrink(),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 }
@@ -72,6 +78,7 @@ class PersonalDetailsForm extends StatefulWidget {
 class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
+  late TextEditingController _emailController;
   late TextEditingController _idController;
   late TextEditingController _dobController;
   String? _gender;
@@ -83,6 +90,7 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
     super.initState();
     final user = Provider.of<AuthProvider>(context, listen: false).user;
     _nameController = TextEditingController(text: user?.name ?? '');
+    _emailController = TextEditingController(text: user?.email ?? '');
     _idController = TextEditingController(text: user?.idNumber ?? '');
     _dobController = TextEditingController(text: user?.dob ?? '');
     _gender = user?.gender;
@@ -92,6 +100,7 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
   @override
   void dispose() {
     _nameController.dispose();
+    _emailController.dispose();
     _idController.dispose();
     _dobController.dispose();
     super.dispose();
@@ -110,37 +119,51 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
             children: <Widget>[
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Full Name', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                    labelText: 'Full Name', border: OutlineInputBorder()),
                 validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
-               const SizedBox(height: 16),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _emailController,
+                decoration: const InputDecoration(
+                    labelText: 'Email', border: OutlineInputBorder()),
+                validator: (value) => value!.isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _idController,
-                decoration: const InputDecoration(labelText: 'National ID', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                    labelText: 'National ID', border: OutlineInputBorder()),
                 validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
-               const SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _dobController,
-                decoration: const InputDecoration(labelText: 'Date of Birth', border: OutlineInputBorder(), suffixIcon: Icon(Icons.calendar_today)),
+                decoration: const InputDecoration(
+                    labelText: 'Date of Birth',
+                    border: OutlineInputBorder(),
+                    suffixIcon: Icon(Icons.calendar_today)),
                 readOnly: true,
                 onTap: () async {
-                    DateTime? picked = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(1900),
-                        lastDate: DateTime.now(),
-                    );
-                    if (picked != null) {
-                      _dobController.text = picked.toIso8601String().split('T').first;
-                    }
-                },
+                  DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(1900),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null) {
+                    _dobController.text =
+                        picked.toIso8601String().split('T').first;
+                  }
+                                },
                 validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
-               const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
                 initialValue: _gender,
-                decoration: const InputDecoration(labelText: 'Gender', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                    labelText: 'Gender', border: OutlineInputBorder()),
                 items: ['Male', 'Female', 'Other'].map((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
@@ -152,13 +175,16 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                     _gender = newValue;
                   });
                 },
-                validator: (value) => value == null ? 'Please select your gender' : null,
+                validator: (value) =>
+                    value == null ? 'Please select your gender' : null,
               ),
-               const SizedBox(height: 16),
+              const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                 initialValue: _maritalStatus,
-                decoration: const InputDecoration(labelText: 'Marital Status', border: OutlineInputBorder()),
-                items: ['Single', 'Married', 'Divorced', 'Widowed'].map((String value) {
+                initialValue: _maritalStatus,
+                decoration: const InputDecoration(
+                    labelText: 'Marital Status', border: OutlineInputBorder()),
+                items: ['Single', 'Married', 'Divorced', 'Widowed']
+                    .map((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
                     child: Text(value),
@@ -169,11 +195,12 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                     _maritalStatus = newValue;
                   });
                 },
-                validator: (value) => value == null ? 'Please select your marital status' : null,
+                validator: (value) =>
+                    value == null ? 'Please select your marital status' : null,
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                 style: ElevatedButton.styleFrom(
+                style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
                   backgroundColor: Theme.of(context).primaryColor,
                   foregroundColor: Colors.white,
@@ -186,31 +213,37 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                           try {
                             await authProvider.updatePersonalInfo(
                               _nameController.text,
+                              _emailController.text,
                               _idController.text,
                               _dobController.text,
                               _gender!,
                               _maritalStatus!,
                             );
                             if (mounted) {
-                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Details saved!')),
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Details Updated!')),
                               );
-                               context.pop();
+                              context.pop();
                             }
                           } catch (e) {
                             if (mounted) {
-                               ScaffoldMessenger.of(context).showSnackBar(
+                              ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text(e.toString())),
                               );
                             }
                           } finally {
                             if (mounted) {
-                               setState(() => _isLoading = false);
+                              setState(() => _isLoading = false);
                             }
                           }
                         }
                       },
-                child: _isLoading ? const CircularProgressIndicator(color: Colors.white,) : const Text('Save Changes', style: TextStyle(fontSize: 18)),
+                child: _isLoading
+                    ? const CircularProgressIndicator(
+                        color: Colors.white,
+                      )
+                    : const Text('Save Changes',
+                        style: TextStyle(fontSize: 18)),
               ),
             ],
           ),
@@ -264,24 +297,28 @@ class _ResidentialDetailsFormState extends State<ResidentialDetailsForm> {
             children: <Widget>[
               TextFormField(
                 controller: _countyController,
-                decoration: const InputDecoration(labelText: 'County', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                    labelText: 'County', border: OutlineInputBorder()),
                 validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
-               const SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _cityController,
-                decoration: const InputDecoration(labelText: 'City/Town', border: OutlineInputBorder()),
-                 validator: (value) => value!.isEmpty ? 'Required' : null,
+                decoration: const InputDecoration(
+                    labelText: 'City/Town', border: OutlineInputBorder()),
+                validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
-               const SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _addressController,
-                decoration: const InputDecoration(labelText: 'Residential Address', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                    labelText: 'Residential Address',
+                    border: OutlineInputBorder()),
                 validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                 style: ElevatedButton.styleFrom(
+                style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
                   backgroundColor: Theme.of(context).primaryColor,
                   foregroundColor: Colors.white,
@@ -297,26 +334,29 @@ class _ResidentialDetailsFormState extends State<ResidentialDetailsForm> {
                               _cityController.text,
                               _addressController.text,
                             );
-                             if (mounted) {
-                               ScaffoldMessenger.of(context).showSnackBar(
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Details saved!')),
                               );
-                               context.pop();
+                              context.pop();
                             }
                           } catch (e) {
                             if (mounted) {
-                               ScaffoldMessenger.of(context).showSnackBar(
+                              ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text(e.toString())),
                               );
                             }
                           } finally {
-                             if (mounted) {
-                                setState(() => _isLoading = false);
-                             }
+                            if (mounted) {
+                              setState(() => _isLoading = false);
+                            }
                           }
                         }
                       },
-                child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Save Changes', style: TextStyle(fontSize: 18)),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Save Changes',
+                        style: TextStyle(fontSize: 18)),
               ),
             ],
           ),

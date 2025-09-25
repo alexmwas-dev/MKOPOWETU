@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:okoa_loan/src/models/loan_model.dart';
-import 'package:okoa_loan/src/services/loan_service.dart';
+import 'package:mkopo_wetu/src/models/loan_model.dart';
+import 'package:mkopo_wetu/src/services/loan_service.dart';
 
 class LoanProvider with ChangeNotifier {
   final LoanService _loanService = LoanService();
@@ -34,13 +34,15 @@ class LoanProvider with ChangeNotifier {
         throw Exception('You already have a pending loan application.');
       }
 
-      final rejectedLoans = existingLoans.where((loan) => loan.status == 'rejected').toList();
+      final rejectedLoans =
+          existingLoans.where((loan) => loan.status == 'rejected').toList();
       if (rejectedLoans.isNotEmpty) {
         final lastRejectedLoan = rejectedLoans.last;
         final difference = DateTime.now().difference(lastRejectedLoan.date);
         if (difference.inDays < 3) {
           final daysRemaining = 3 - difference.inDays;
-          throw Exception('You cannot apply for a new loan for another $daysRemaining day(s) after a rejection.');
+          throw Exception(
+              'You cannot apply for a new loan for another $daysRemaining day(s) after a rejection.');
         }
       }
 
@@ -58,12 +60,12 @@ class LoanProvider with ChangeNotifier {
 
       // Simulate automatic rejection after 30 seconds
       Timer(const Duration(seconds: 30), () async {
-        final currentLoan = _loans.firstWhere((l) => l.id == loan.id, orElse: () => loan);
+        final currentLoan =
+            _loans.firstWhere((l) => l.id == loan.id, orElse: () => loan);
         if (currentLoan.status == 'pending') {
           await updateLoanStatus(loan.id, 'rejected');
         }
       });
-
     } catch (e) {
       _setError(e.toString());
     } finally {
@@ -107,7 +109,8 @@ class LoanProvider with ChangeNotifier {
       final remainingAmount = loanToRepay.amount - amount;
 
       if (remainingAmount < 0) {
-        throw Exception('Repayment amount cannot be greater than the loan amount.');
+        throw Exception(
+            'Repayment amount cannot be greater than the loan amount.');
       }
 
       if (remainingAmount == 0) {

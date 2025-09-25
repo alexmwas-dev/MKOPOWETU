@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:okoa_loan/src/services/ad_manager.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
+import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
 
 class FaqPage extends StatefulWidget {
   const FaqPage({super.key});
@@ -10,22 +11,16 @@ class FaqPage extends StatefulWidget {
 }
 
 class _FaqPageState extends State<FaqPage> {
+  final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
 
-  BannerAd? _bannerAd;
-
-    @override
+  @override
   void initState() {
     super.initState();
-    _bannerAd = AdManager.getBannerAd();
-    _bannerAd?.load();
+    _interstitialAdWidget.loadAd();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _interstitialAdWidget.showAd();
+    });
   }
-
-    @override
-  void dispose() {
-    _bannerAd?.dispose();
-    super.dispose();
-  }
-
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +28,16 @@ class _FaqPageState extends State<FaqPage> {
       appBar: AppBar(
         title: const Text('FAQ'),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/profile');
+            }
+          },
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
@@ -64,13 +69,7 @@ class _FaqPageState extends State<FaqPage> {
           ),
         ],
       ),
-      bottomNavigationBar: _bannerAd != null
-          ? SizedBox(
-              width: _bannerAd!.size.width.toDouble(),
-              height: _bannerAd!.size.height.toDouble(),
-              child: AdWidget(ad: _bannerAd!),
-            )
-          : const SizedBox.shrink(),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 }
@@ -94,13 +93,15 @@ class _FaqItemState extends State<FaqItem> {
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ExpansionTile(
-        title: Text(widget.question, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text(widget.question,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         onExpansionChanged: (isExpanded) {
           setState(() {
             _isExpanded = isExpanded;
           });
         },
-        trailing: Icon(_isExpanded ? Icons.remove : Icons.add, color: Theme.of(context).primaryColor),
+        trailing: Icon(_isExpanded ? Icons.remove : Icons.add,
+            color: Theme.of(context).primaryColor),
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:okoa_loan/src/services/ad_manager.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
+import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
 
 class LoanTermsPage extends StatefulWidget {
   const LoanTermsPage({super.key});
@@ -10,20 +11,15 @@ class LoanTermsPage extends StatefulWidget {
 }
 
 class _LoanTermsPageState extends State<LoanTermsPage> {
-
-  BannerAd? _bannerAd;
+  final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
 
   @override
   void initState() {
     super.initState();
-    _bannerAd = AdManager.getBannerAd();
-    _bannerAd?.load();
-  }
-
-  @override
-  void dispose() {
-    _bannerAd?.dispose();
-    super.dispose();
+    _interstitialAdWidget.loadAd();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _interstitialAdWidget.showAd();
+    });
   }
 
   @override
@@ -32,6 +28,16 @@ class _LoanTermsPageState extends State<LoanTermsPage> {
       appBar: AppBar(
         title: const Text('Loan Terms'),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/profile');
+            }
+          },
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -46,12 +52,12 @@ class _LoanTermsPageState extends State<LoanTermsPage> {
             _buildTermSection(
               title: '1. Eligibility',
               content:
-                  'To be eligible for a loan, you must be at least 18 years old and a registered user of the Okoa Loan app. You must also have a valid national ID and a registered mobile money account.',
+                  'To be eligible for a loan, you must be at least 18 years old and a registered user of the Mkopo Wetu app. You must also have a valid national ID and a registered mobile money account.',
             ),
             _buildTermSection(
               title: '2. Loan Application',
               content:
-                  'All loan applications must be made through the Okoa Loan app. You will be required to provide accurate and complete information in your loan application. Okoa Loan reserves the right to approve or reject any loan application at its sole discretion.',
+                  'All loan applications must be made through the Mkopo Wetu app. You will be required to provide accurate and complete information in your loan application. Mkopo Wetu reserves the right to approve or reject any loan application at its sole discretion.',
             ),
             _buildTermSection(
               title: '3. Interest and Fees',
@@ -66,13 +72,7 @@ class _LoanTermsPageState extends State<LoanTermsPage> {
           ],
         ),
       ),
-      bottomNavigationBar: _bannerAd != null
-          ? SizedBox(
-              width: _bannerAd!.size.width.toDouble(),
-              height: _bannerAd!.size.height.toDouble(),
-              child: AdWidget(ad: _bannerAd!),
-            )
-          : const SizedBox.shrink(),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 

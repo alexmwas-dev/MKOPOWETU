@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
 import 'package:provider/provider.dart';
-import 'package:okoa_loan/src/providers/auth_provider.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:okoa_loan/src/services/ad_manager.dart';
+import 'package:mkopo_wetu/src/providers/auth_provider.dart';
+import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -17,18 +17,19 @@ class _LoginPageState extends State<LoginPage> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  BannerAd? _bannerAd;
+  final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
 
   @override
   void initState() {
     super.initState();
-    _bannerAd = AdManager.getBannerAd();
-    _bannerAd?.load();
+    _interstitialAdWidget.loadAd();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _interstitialAdWidget.showAd();
+    });
   }
 
   @override
   void dispose() {
-    _bannerAd?.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -53,7 +54,7 @@ class _LoginPageState extends State<LoginPage> {
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
-                 const SizedBox(height: 16),
+                const SizedBox(height: 16),
                 const Text(
                   'Login to your account to continue',
                   textAlign: TextAlign.center,
@@ -70,7 +71,7 @@ class _LoginPageState extends State<LoginPage> {
                   keyboardType: TextInputType.phone,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your phone number';
+                      return 'Please enter your phone number.';
                     }
                     return null;
                   },
@@ -80,13 +81,13 @@ class _LoginPageState extends State<LoginPage> {
                   controller: _passwordController,
                   decoration: const InputDecoration(
                     labelText: 'Password',
-                     prefixIcon: Icon(Icons.lock_outline),
+                    prefixIcon: Icon(Icons.lock_outlined),
                     border: OutlineInputBorder(),
                   ),
                   obscureText: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
+                      return 'Please enter your password.';
                     }
                     return null;
                   },
@@ -112,33 +113,41 @@ class _LoginPageState extends State<LoginPage> {
                                 _passwordController.text,
                               );
                               if (mounted) {
-                                context.go('/home');
-                              } 
-                            } catch (e) {
-                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('An error occurred: $e')),
+                                  const SnackBar(
+                                      content: Text('Login successful!')),
                                 );
-                               }
+                                context.go('/home');
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Login failed. Please check your credentials and try again.')),
+                                );
+                              }
                             } finally {
-                               if (mounted) {
+                              if (mounted) {
                                 setState(() => _isLoading = false);
-                               }
+                              }
                             }
                           }
                         },
-                        child: const Text('Login', style: TextStyle(fontSize: 18)),
+                        child:
+                            const Text('Login', style: TextStyle(fontSize: 18)),
                       ),
                 const SizedBox(height: 24),
-                 Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                     const Text("Don't have an account?"),
-                     TextButton(
+                    const Text("Don't have an account?"),
+                    TextButton(
                       onPressed: () => context.go('/register'),
                       child: Text(
                         'Register',
-                        style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -148,14 +157,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ),
-        bottomNavigationBar: _bannerAd != null
-          ? Container(
-              alignment: Alignment.center,
-              width: _bannerAd!.size.width.toDouble(),
-              height: _bannerAd!.size.height.toDouble(),
-              child: AdWidget(ad: _bannerAd!),
-            )
-          : const SizedBox.shrink(),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 }

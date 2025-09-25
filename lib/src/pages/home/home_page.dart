@@ -2,13 +2,14 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
-import 'package:okoa_loan/src/models/loan_model.dart';
-import 'package:okoa_loan/src/providers/auth_provider.dart';
-import 'package:okoa_loan/src/providers/loan_provider.dart';
-import 'package:okoa_loan/src/services/ad_manager.dart';
-import 'package:okoa_loan/src/widgets/recipient_notification.dart';
+import 'package:mkopo_wetu/src/models/loan_model.dart';
+import 'package:mkopo_wetu/src/providers/auth_provider.dart';
+import 'package:mkopo_wetu/src/providers/loan_provider.dart';
+import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
+import 'package:mkopo_wetu/src/widgets/bottom_nav_bar.dart';
+import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
+import 'package:mkopo_wetu/src/widgets/recipient_notification.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,8 +19,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  BannerAd? _bannerAd;
-  int _navBarIndex = 0;
+  final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
   Timer? _notificationTimer;
   String? _notificationMessage;
 
@@ -29,14 +29,15 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _bannerAd = AdManager.getBannerAd();
-    _bannerAd?.load();
+    _interstitialAdWidget.loadAd();
     _startNotificationTimer();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _interstitialAdWidget.showAd();
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       if (authProvider.user != null) {
-        Provider.of<LoanProvider>(context, listen: false).fetchLoans(authProvider.user!.uid);
+        Provider.of<LoanProvider>(context, listen: false)
+            .fetchLoans(authProvider.user!.uid);
       }
     });
   }
@@ -52,9 +53,10 @@ class _HomePageState extends State<HomePage> {
     final phoneEnd = _random.nextInt(90000000) + 10000000;
     final amount = (_random.nextInt(20) + 1) * 1000;
     if (mounted) {
-        setState(() {
-            _notificationMessage = '$phoneStart****${phoneEnd.toString().substring(4)} received KSh$amount';
-        });
+      setState(() {
+        _notificationMessage =
+            '$phoneStart****${phoneEnd.toString().substring(4)} received KSh$amount';
+      });
     }
     // Notification will disappear after a few seconds
     Timer(const Duration(seconds: 5), () {
@@ -66,7 +68,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    _bannerAd?.dispose();
     _notificationTimer?.cancel();
     super.dispose();
   }
@@ -79,23 +80,30 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text('Welcome, ${authProvider.user?.name ?? 'User'}'),
         actions: [
-          IconButton(icon: const Icon(Icons.notifications_none_outlined), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.person_pin, size: 32), onPressed: () => context.go('/profile')),
+          IconButton(
+              icon: const Icon(Icons.notifications_none_outlined),
+              onPressed: () {}),
+          IconButton(
+              icon: const Icon(Icons.person_pin, size: 32),
+              onPressed: () => context.go('/profile')),
           const SizedBox(width: 8),
         ],
-      ), 
+      ),
       body: Stack(
         children: [
           RefreshIndicator(
             onRefresh: () async {
               if (authProvider.user != null) {
-                await Provider.of<LoanProvider>(context, listen: false).fetchLoans(authProvider.user!.uid);
+                await Provider.of<LoanProvider>(context, listen: false)
+                    .fetchLoans(authProvider.user!.uid);
               }
             },
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 90.0), // Padding for floating button and banner
+              padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0,
+                  150.0), // Padding for floating button and banner
               children: [
                 _buildMainCard(context, latestLoan),
                 const SizedBox(height: 24),
@@ -108,112 +116,69 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-          if (_notificationMessage != null) 
-            RecipientNotification(message: _notificationMessage!), 
+          if (_notificationMessage != null)
+            RecipientNotification(message: _notificationMessage!),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.go('/apply-loan'),
+        onPressed: () {
+          _interstitialAdWidget.showAd();
+          context.go('/apply-loan');
+        },
         child: const Icon(Icons.add, color: Colors.white),
         backgroundColor: Theme.of(context).primaryColor,
         shape: const CircleBorder(),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: _buildBottomAppBar(),
-    );
-  }
-
-  BottomAppBar _buildBottomAppBar() {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 8.0,
-      child: SizedBox(
-        height: 60,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-             Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: <Widget>[
-                  _buildNavBarItem(Icons.home, 'Home', 0),
-                  _buildNavBarItem(Icons.history_edu_outlined, 'History', 1),
-                  const SizedBox(width: 40), // The space for the FAB
-                  _buildNavBarItem(Icons.help_outline_rounded, 'Help', 2),
-                  _buildNavBarItem(Icons.person_outline, 'Account', 3),
-                ],
-              ),
-              if (_bannerAd != null)
-                Expanded(
-                  child: Container(
-                    alignment: Alignment.center,
-                    width: _bannerAd!.size.width.toDouble(),
-                    height: _bannerAd!.size.height.toDouble(),
-                    child: AdWidget(ad: _bannerAd!),
-                  ),
-                ),
-          ],
-        ),
-      ),
-    );
-  }
-
-
-  Widget _buildNavBarItem(IconData icon, String label, int index) {
-    final isSelected = _navBarIndex == index;
-    final color = isSelected ? Theme.of(context).colorScheme.primary : Colors.grey;
-    return InkWell(
-      onTap: () {
-        setState(() => _navBarIndex = index);
-        if (index == 1) context.go('/loan-history');
-        if (index == 2) context.go('/faq'); 
-        if (index == 3) context.go('/profile');
-      },
-      borderRadius: BorderRadius.circular(30),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [Icon(icon, color: color), Text(label, style: TextStyle(color: color, fontSize: 12))],
-        ),
+      bottomNavigationBar: const Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          BannerAdWidget(),
+          BottomNavBar(currentIndex: 0),
+        ],
       ),
     );
   }
 
   Widget _buildMainCard(BuildContext context, Loan? loan) {
-    if (loan == null || loan.status == 'paid') {
-      return _buildLoanLimitCard();
-    }
-
-    if (loan.status == 'pending') {
-      return _buildMessageCard(
-        context,
-        title: 'Your loan application is being reviewed',
-        subtitle: 'Please be patient. This may take a few moments.',
-        icon: Icons.hourglass_top_rounded,
-        color: Colors.orange,
-      );
-    }
-
-    if (loan.status == 'rejected') {
-      final daysSinceRejection = DateTime.now().difference(loan.date).inDays;
-      if (daysSinceRejection < 3) {
-        final daysRemaining = 3 - daysSinceRejection;
-        return _buildMessageCard(
-          context,
-          title: 'Your loan application has been rejected',
-          subtitle: 'You can apply for another loan in $daysRemaining day(s).',
-          icon: Icons.error_outline_rounded,
-          color: Colors.red,
-        );
+    if (loan != null) {
+      if (loan.status == 'pending') {
+        // Auto-reject loan after 30 seconds
+        Future.delayed(const Duration(seconds: 30), () {
+          if (mounted && loan.status == 'pending') {
+            Provider.of<LoanProvider>(context, listen: false).updateLoanStatus(loan.id, 'rejected');
+          }
+        });
       }
-      return _buildLoanLimitCard(); // 3 days have passed
+      switch (loan.status) {
+        case 'pending':
+          return _buildMessageCard(
+            context,
+            title: 'Your loan application is being reviewed',
+            subtitle: 'Please be patient. This may take a few moments.',
+            icon: Icons.hourglass_top_rounded,
+            color: Colors.orange,
+          );
+        case 'rejected':
+          final daysSinceRejection =
+              DateTime.now().difference(loan.date).inDays;
+          if (daysSinceRejection < 3) {
+            final daysRemaining = 3 - daysSinceRejection;
+            return _buildMessageCard(
+              context,
+              title: 'Your loan application has been rejected',
+              subtitle:
+                  'You can apply for another loan in $daysRemaining day(s).',
+              icon: Icons.error_outline_rounded,
+              color: Colors.red,
+            );
+          }
+      }
     }
-    
-    // Default to loan limit card
     return _buildLoanLimitCard();
   }
 
-   Widget _buildLoanLimitCard() {
+  Widget _buildLoanLimitCard() {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -230,19 +195,27 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Application Amount (KSh)', style: TextStyle(color: Colors.white, fontSize: 16)),
+            const Text('Application Amount (KSh)',
+                style: TextStyle(color: Colors.white, fontSize: 16)),
             const SizedBox(height: 8),
-            const Text('80,000', style: TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold)),
+            const Text('80,000',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Row(
               children: [
-                const Icon(Icons.timer_outlined, color: Colors.white, size: 16), 
+                const Icon(Icons.timer_outlined, color: Colors.white, size: 16),
                 const SizedBox(width: 8),
-                const Text('Get loan within 3 minutes', style: TextStyle(color: Colors.white)),
+                const Text('Get loan within 3 minutes',
+                    style: TextStyle(color: Colors.white)),
                 const SizedBox(width: 16),
-                const Icon(Icons.calendar_today_outlined, color: Colors.white, size: 16), 
+                const Icon(Icons.calendar_today_outlined,
+                    color: Colors.white, size: 16),
                 const SizedBox(width: 8),
-                const Text('Maximum 365 days to repay', style: TextStyle(color: Colors.white)),
+                const Text('Maximum 365 days to repay',
+                    style: TextStyle(color: Colors.white)),
               ],
             )
           ],
@@ -251,7 +224,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildMessageCard(BuildContext context, {required String title, required String subtitle, required IconData icon, required Color color}) {
+  Widget _buildMessageCard(BuildContext context,
+      {required String title,
+      required String subtitle,
+      required IconData icon,
+      required Color color}) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -262,9 +239,14 @@ class _HomePageState extends State<HomePage> {
           children: [
             Icon(icon, size: 48, color: color),
             const SizedBox(height: 16),
-            Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+            Text(title,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center),
             const SizedBox(height: 8),
-            Text(subtitle, style: TextStyle(color: Colors.grey[600]), textAlign: TextAlign.center),
+            Text(subtitle,
+                style: TextStyle(color: Colors.grey[600]),
+                textAlign: TextAlign.center),
           ],
         ),
       ),
@@ -272,19 +254,26 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildActionButtons(BuildContext context, Loan? loan) {
-    bool canApply = loan == null || loan.status == 'paid' || (loan.status == 'rejected' && DateTime.now().difference(loan.date).inDays >= 3);
+    bool canApply = loan == null ||
+        loan.status == 'paid' ||
+        (loan.status == 'rejected' &&
+            DateTime.now().difference(loan.date).inDays >= 3);
 
     return Row(
       children: [
         Expanded(
           child: ElevatedButton.icon(
             icon: const Icon(Icons.add_circle_outline, size: 20),
-            onPressed: canApply ? () => context.go('/apply-loan') : null,
+            onPressed: canApply ? () {
+              _interstitialAdWidget.showAd();
+              context.go('/apply-loan');
+            } : null,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30)),
               backgroundColor: Theme.of(context).primaryColor,
-               foregroundColor: Colors.white,
+              foregroundColor: Colors.white,
             ),
             label: const Text('Loan Now'),
           ),
@@ -292,12 +281,14 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(width: 16),
         Expanded(
           child: OutlinedButton.icon(
-             icon: const Icon(Icons.history_outlined, size: 20),
+            icon: const Icon(Icons.history_outlined, size: 20),
             onPressed: () => context.go('/loan-history'),
             style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
+                side: BorderSide(
+                    color: Theme.of(context).colorScheme.primary, width: 1.5)),
             label: const Text('History'),
           ),
         ),
@@ -309,9 +300,11 @@ class _HomePageState extends State<HomePage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _buildIconWithText('Submit Info', Icons.article_outlined, () => context.go('/profile/edit')),
+        _buildIconWithText('Submit Info', Icons.article_outlined,
+            () => context.go('/profile/edit')),
         _buildIconWithText('Get Credit', Icons.trending_up, () {}),
-        _buildIconWithText('Get Money', Icons.account_balance_wallet_outlined, () {}),
+        _buildIconWithText(
+            'Get Money', Icons.account_balance_wallet_outlined, () {}),
       ],
     );
   }
@@ -324,8 +317,10 @@ class _HomePageState extends State<HomePage> {
         children: [
           CircleAvatar(
             radius: 28,
-            backgroundColor: Theme.of(context).colorScheme.primary.withAlpha(25),
-            child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 28),
+            backgroundColor:
+                Theme.of(context).colorScheme.primary.withAlpha(25),
+            child: Icon(icon,
+                color: Theme.of(context).colorScheme.primary, size: 28),
           ),
           const SizedBox(height: 8),
           Text(text, style: TextStyle(fontSize: 12, color: Colors.grey[700]))
@@ -338,11 +333,14 @@ class _HomePageState extends State<HomePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Borrowing Guide', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Text('Borrowing Guide',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        _buildGuideItem('How it works?', Icons.help_outline, () => context.go('/faq')),
-        _buildGuideItem('How to repay?', Icons.payment, () => context.go('/faq')),
-        //HOMEPAGE SUB ITEMS.    _buildGuideItem('Improve loan limit', Icons.arrow_upward, () {}),
+        _buildGuideItem(
+            'How it works?', Icons.help_outline, () => context.go('/faq')),
+        _buildGuideItem(
+            'How to repay?', Icons.payment, () => context.go('/faq')),
+        _buildGuideItem('Improve loan limit', Icons.arrow_upward, () {}),
       ],
     );
   }
@@ -351,10 +349,10 @@ class _HomePageState extends State<HomePage> {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
       elevation: 0,
-      color: Colors.grey.shade100,
+      color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        leading: Icon(icon, size: 24, color: Theme.of(context).colorScheme.primary),
+        leading:            Icon(icon, size: 24, color: Theme.of(context).colorScheme.primary),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
         onTap: onTap,

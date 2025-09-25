@@ -1,43 +1,61 @@
+
+import 'dart:io';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'dart:developer' as developer;
 
 class AdManager {
+  static const String _androidBannerAdUnitId = 'ca-app-pub-3940256099942544/6300978111';
+  static const String _androidInterstitialAdUnitId = 'ca-app-pub-3940256099942544/1033173712';
+
   static String get bannerAdUnitId {
-    // Replace with your own ad unit ID.
-    return 'ca-app-pub-2979093467620072/9399839997';
+    if (Platform.isAndroid) {
+      return _androidBannerAdUnitId;
+    } else {
+      throw UnsupportedError('Unsupported platform');
+    }
   }
 
   static String get interstitialAdUnitId {
-    // Replace with your own ad unit ID.
-    return 'ca-app-pub-2979093467620072/2823157508';
+    if (Platform.isAndroid) {
+      return _androidInterstitialAdUnitId;
+    } else {
+      throw UnsupportedError('Unsupported platform');
+    }
   }
 
-  static BannerAd getBannerAd() {
-    return BannerAd(
+  static BannerAd createBannerAd(BannerAdListener listener) {
+    final BannerAd bannerAd = BannerAd(
       adUnitId: bannerAdUnitId,
       size: AdSize.banner,
       request: const AdRequest(),
-      listener: const BannerAdListener(),
+      listener: listener,
     );
+    return bannerAd;
   }
 
-  static InterstitialAd? _interstitialAd;
-
-  static void loadInterstitialAd() {
+  static void loadAndShowInterstitialAd() {
     InterstitialAd.load(
       adUnitId: interstitialAdUnitId,
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (InterstitialAd ad) {
-          _interstitialAd = ad;
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdShowedFullScreenContent: (InterstitialAd ad) =>
+                developer.log('$ad onAdShowedFullScreenContent.'),
+            onAdDismissedFullScreenContent: (InterstitialAd ad) {
+              ad.dispose();
+            },
+            onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+              developer.log('$ad onAdFailedToShowFullScreenContent: $error');
+              ad.dispose();
+            },
+          );
+          ad.show();
         },
         onAdFailedToLoad: (LoadAdError error) {
-          print('InterstitialAd failed to load: $error');
+          developer.log('InterstitialAd failed to load: $error');
         },
       ),
     );
-  }
-
-  static InterstitialAd? getInterstitialAd() {
-    return _interstitialAd;
   }
 }

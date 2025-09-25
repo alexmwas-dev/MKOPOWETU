@@ -23,7 +23,10 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        return ios;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for ios - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
@@ -47,29 +50,23 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAI_17L3ql3pz61TBbiN0RlcuTSSXCv_VM',
-    appId: '1:508486369644:web:e0eb2cb08b0701b229b349',
-    messagingSenderId: '508486369644',
-    projectId: 'okoa-loan-694e3',
-    authDomain: 'okoa-loan-694e3.firebaseapp.com',
-    storageBucket: 'okoa-loan-694e3.firebasestorage.app',
-    measurementId: 'G-9W0CKF12ZM',
+    apiKey: 'AIzaSyC42t6FUfYSbsNOpVbxdYViA04dtUrkT78',
+    appId: '1:363494444667:web:1cd58c88c3d0ef92a21cde',
+    messagingSenderId: '363494444667',
+    projectId: 'mkopo-wetu',
+    authDomain: 'mkopo-wetu.firebaseapp.com',
+    databaseURL: 'https://mkopo-wetu-default-rtdb.firebaseio.com',
+    storageBucket: 'mkopo-wetu.firebasestorage.app',
+    measurementId: 'G-QJDBBE3EZL',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDA7TpO0GKgzq6nSZZP_sOyiCdEKxgNlh4',
-    appId: '1:508486369644:android:1c9a85c41df2c60129b349',
-    messagingSenderId: '508486369644',
-    projectId: 'okoa-loan-694e3',
-    storageBucket: 'okoa-loan-694e3.firebasestorage.app',
+    apiKey: 'AIzaSyCSkPJ0R3CjTwECZRltMvAD8f4vVsr2N_w',
+    appId: '1:363494444667:android:4356f9e0eb521335a21cde',
+    messagingSenderId: '363494444667',
+    projectId: 'mkopo-wetu',
+    databaseURL: 'https://mkopo-wetu-default-rtdb.firebaseio.com',
+    storageBucket: 'mkopo-wetu.firebasestorage.app',
   );
 
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDQPi_YnkywyJdfWiIOeN7UN3-QrKXX_LU',
-    appId: '1:508486369644:ios:c38c5c4663e16ff629b349',
-    messagingSenderId: '508486369644',
-    projectId: 'okoa-loan-694e3',
-    storageBucket: 'okoa-loan-694e3.firebasestorage.app',
-    iosBundleId: 'com.okoaloan.ke',
-  );
 }

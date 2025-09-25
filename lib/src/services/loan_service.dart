@@ -1,8 +1,12 @@
 import 'package:firebase_database/firebase_database.dart';
-import 'package:okoa_loan/src/models/loan_model.dart';
+import 'package:mkopo_wetu/src/models/loan_model.dart';
 
 class LoanService {
-  final DatabaseReference _loansRef = FirebaseDatabase.instance.ref().child('loans');
+  final DatabaseReference _loansRef = FirebaseDatabase.instanceFor(
+          app: FirebaseDatabase.instance.app,
+          databaseURL: 'https://mkopo-wetu-default-rtdb.firebaseio.com/')
+      .ref()
+      .child('loans');
 
   Future<void> createLoan(Loan loan) async {
     final newLoanRef = _loansRef.push();

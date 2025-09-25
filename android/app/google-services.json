@@ -1,21 +1,22 @@
 {
   "project_info": {
-    "project_number": "508486369644",
-    "project_id": "okoa-loan-694e3",
-    "storage_bucket": "okoa-loan-694e3.firebasestorage.app"
+    "project_number": "363494444667",
+    "firebase_url": "https://mkopo-wetu-default-rtdb.firebaseio.com",
+    "project_id": "mkopo-wetu",
+    "storage_bucket": "mkopo-wetu.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:508486369644:android:1c9a85c41df2c60129b349",
+        "mobilesdk_app_id": "1:363494444667:android:4356f9e0eb521335a21cde",
         "android_client_info": {
-          "package_name": "com.okoaloan.ke"
+          "package_name": "com.mkopowetu.ke"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDA7TpO0GKgzq6nSZZP_sOyiCdEKxgNlh4"
+          "current_key": "AIzaSyCSkPJ0R3CjTwECZRltMvAD8f4vVsr2N_w"
         }
       ],
       "services": {

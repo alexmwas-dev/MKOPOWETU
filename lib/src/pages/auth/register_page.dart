@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
 import 'package:provider/provider.dart';
-import 'package:okoa_loan/src/providers/auth_provider.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:okoa_loan/src/services/ad_manager.dart';
+import 'package:mkopo_wetu/src/providers/auth_provider.dart';
+import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -17,18 +17,19 @@ class _RegisterPageState extends State<RegisterPage> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  BannerAd? _bannerAd;
+  final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
 
   @override
   void initState() {
     super.initState();
-    _bannerAd = AdManager.getBannerAd();
-    _bannerAd?.load();
+    _interstitialAdWidget.loadAd();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _interstitialAdWidget.showAd();
+    });
   }
 
   @override
   void dispose() {
-    _bannerAd?.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -39,7 +40,10 @@ class _RegisterPageState extends State<RegisterPage> {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(elevation: 0, backgroundColor: Colors.transparent, foregroundColor: Colors.black),
+      appBar: AppBar(
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.black),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -63,7 +67,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 48),
                 TextFormField(
                   controller: _phoneController,
-                   decoration: const InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Phone Number',
                     prefixIcon: Icon(Icons.phone_outlined),
                     border: OutlineInputBorder(),
@@ -71,7 +75,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   keyboardType: TextInputType.phone,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your phone number';
+                      return 'Please enter your phone number.';
                     }
                     return null;
                   },
@@ -79,7 +83,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
-                   decoration: const InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Password',
                     prefixIcon: Icon(Icons.lock_outline),
                     border: OutlineInputBorder(),
@@ -87,10 +91,10 @@ class _RegisterPageState extends State<RegisterPage> {
                   obscureText: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
+                      return 'Please enter your password.';
                     }
-                     if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                    if (value.length < 6) {
+                      return 'Password must be at least 6 characters long.';
                     }
                     return null;
                   },
@@ -104,8 +108,8 @@ class _RegisterPageState extends State<RegisterPage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
-                           backgroundColor: Theme.of(context).primaryColor,
-                           foregroundColor: Colors.white,
+                          backgroundColor: Theme.of(context).primaryColor,
+                          foregroundColor: Colors.white,
                         ),
                         onPressed: () async {
                           if (_formKey.currentState!.validate()) {
@@ -115,30 +119,42 @@ class _RegisterPageState extends State<RegisterPage> {
                                 _phoneController.text,
                                 _passwordController.text,
                               );
-                              context.go('/otp-verification');
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Registration successful! Please verify your phone number.')),
+                                );
+                                context.go('/otp');
+                              }
                             } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(e.toString())),
-                              );
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Registration failed. Please try again.')),
+                                );
+                              }
                             } finally {
-                              if(mounted) {
+                              if (mounted) {
                                 setState(() => _isLoading = false);
                               }
                             }
                           }
                         },
-                        child: const Text('Register', style: TextStyle(fontSize: 18)),
+                        child: const Text('Register',
+                            style: TextStyle(fontSize: 18)),
                       ),
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                     const Text('Already have an account?'),
-                     TextButton(
+                    const Text('Already have an account?'),
+                    TextButton(
                       onPressed: () => context.go('/'),
                       child: Text(
                         'Login',
-                        style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -148,14 +164,7 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
         ),
       ),
-      bottomNavigationBar: _bannerAd != null
-          ? Container(
-              alignment: Alignment.center,
-              width: _bannerAd!.size.width.toDouble(),
-              height: _bannerAd!.size.height.toDouble(),
-              child: AdWidget(ad: _bannerAd!),
-            )
-          : const SizedBox.shrink(),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 }

@@ -1,8 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:okoa_loan/src/widgets/ad_banner.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
+import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
 
-class TermsAndConditionsPage extends StatelessWidget {
+class TermsAndConditionsPage extends StatefulWidget {
   const TermsAndConditionsPage({super.key});
+
+  @override
+  State<TermsAndConditionsPage> createState() => _TermsAndConditionsPageState();
+}
+
+class _TermsAndConditionsPageState extends State<TermsAndConditionsPage> {
+  final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
+
+  @override
+  void initState() {
+    super.initState();
+    _interstitialAdWidget.loadAd();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _interstitialAdWidget.showAd();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -10,6 +28,16 @@ class TermsAndConditionsPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Terms & Conditions'),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/profile');
+            }
+          },
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -24,7 +52,7 @@ class TermsAndConditionsPage extends StatelessWidget {
             _buildTermSection(
               title: '1. Introduction',
               content:
-                  'By accessing and using the Okoa Loan mobile application, you agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, you must not use our application.',
+                  'By accessing and using the Mkopo Wetu mobile application, you agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, you must not use our application.',
             ),
             _buildTermSection(
               title: '2. Eligibility',
@@ -34,7 +62,7 @@ class TermsAndConditionsPage extends StatelessWidget {
             _buildTermSection(
               title: '3. Loan Application and Approval',
               content:
-                  'All loan applications are subject to approval by Okoa Loan. We reserve the right to approve or reject any loan application at our sole discretion. We may also determine the loan amount and repayment terms based on our assessment of your creditworthiness.',
+                  'All loan applications are subject to approval by Mkopo Wetu. We reserve the right to approve or reject any loan application at our sole discretion. We may also determine the loan amount and repayment terms based on our assessment of your creditworthiness.',
             ),
             _buildTermSection(
               title: '4. Repayment',
@@ -44,12 +72,12 @@ class TermsAndConditionsPage extends StatelessWidget {
             _buildTermSection(
               title: '5. User Conduct',
               content:
-                  'You agree not to use the Okoa Loan application for any unlawful or prohibited activities. You must not attempt to interfere with the proper functioning of the application or compromise its security.',
+                  'You agree not to use the Mkopo Wetu application for any unlawful or prohibited activities. You must not attempt to interfere with the proper functioning of the application or compromise its security.',
             ),
             _buildTermSection(
               title: '6. Limitation of Liability',
               content:
-                  'Okoa Loan is not liable for any damages or losses that may arise from your use of our application. We do not guarantee the availability or accuracy of the information provided in the app.',
+                  'Mkopo Wetu is not liable for any damages or losses that may arise from your use of our application. We do not guarantee the availability or accuracy of the information provided in the app.',
             ),
             _buildTermSection(
               title: '7. Changes to Terms',
@@ -59,12 +87,12 @@ class TermsAndConditionsPage extends StatelessWidget {
             _buildTermSection(
               title: '8. Contact Us',
               content:
-                  'If you have any questions or concerns about these Terms and Conditions, please contact us at support@okoaloan.com.',
+                  'If you have any questions or concerns about these Terms and Conditions, please contact us at support@mkopowetu.com.',
             ),
           ],
         ),
       ),
-      bottomNavigationBar: const AdBanner(),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 

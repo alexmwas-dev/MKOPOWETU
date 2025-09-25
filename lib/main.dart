@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:okoa_loan/src/providers/auth_provider.dart';
-import 'package:okoa_loan/src/providers/connectivity_provider.dart';
-import 'package:okoa_loan/src/router/app_router.dart';
+import 'package:mkopo_wetu/src/providers/auth_provider.dart';
+import 'package:mkopo_wetu/src/providers/connectivity_provider.dart';
+import 'package:mkopo_wetu/src/providers/loan_provider.dart';
+import 'package:mkopo_wetu/src/providers/theme_provider.dart';
+import 'package:mkopo_wetu/src/router/app_router.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -18,26 +20,11 @@ void main() async {
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
         ChangeNotifierProvider(create: (context) => AuthProvider()),
         ChangeNotifierProvider(create: (context) => ConnectivityProvider()),
+        ChangeNotifierProvider(create: (context) => LoanProvider()),
       ],
       child: const MyApp(),
     ),
   );
-}
-
-class ThemeProvider with ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.system;
-
-  ThemeMode get themeMode => _themeMode;
-
-  void toggleTheme() {
-    _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-    notifyListeners();
-  }
-
-  void setSystemTheme() {
-    _themeMode = ThemeMode.system;
-    notifyListeners();
-  }
 }
 
 class MyApp extends StatelessWidget {
@@ -45,9 +32,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primarySeedColor = Color(0xFF00C853); // Emerald Green
+    final authProvider = Provider.of<AuthProvider>(context);
+    final appRouter = AppRouter(authProvider);
+
+    const Color primaryColor = Color(0xFF00C853); // Emerald Green
+    const Color lightGreenBackground = Color(0xFFF0FFF4);
+    const Color cardBackgroundColor = Colors.white;
     const Color textColor = Color(0xFF2C2C2C);
-    const Color screenBackgroundColor = Color(0xFFF0FFF4);
 
     final TextTheme appTextTheme = TextTheme(
       displayLarge: GoogleFonts.oswald(fontSize: 57, fontWeight: FontWeight.bold, color: textColor),
@@ -58,23 +49,32 @@ class MyApp extends StatelessWidget {
 
     final ThemeData lightTheme = ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: screenBackgroundColor,
+      primaryColor: primaryColor,
+      scaffoldBackgroundColor: lightGreenBackground,
+      cardColor: cardBackgroundColor, // Kept for backwards compatibility
       colorScheme: ColorScheme.fromSeed(
-        seedColor: primarySeedColor,
+        seedColor: primaryColor,
         brightness: Brightness.light,
-        primary: primarySeedColor,
+        primary: primaryColor,
+        surface: cardBackgroundColor,
       ),
       textTheme: appTextTheme,
       appBarTheme: AppBarTheme(
-        backgroundColor: screenBackgroundColor,
+        backgroundColor: lightGreenBackground,
         foregroundColor: textColor,
         elevation: 0,
         titleTextStyle: GoogleFonts.oswald(fontSize: 24, fontWeight: FontWeight.bold, color: textColor),
       ),
+      cardTheme: const CardThemeData(
+        elevation: 1,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
+      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           foregroundColor: Colors.white,
-          backgroundColor: primarySeedColor,
+          backgroundColor: primaryColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           textStyle: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w500),
@@ -82,37 +82,13 @@ class MyApp extends StatelessWidget {
       ),
     );
 
-    final ThemeData darkTheme = ThemeData(
-      useMaterial3: true,
-      scaffoldBackgroundColor: Colors.black,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primarySeedColor,
-        brightness: Brightness.dark,
-        primary: primarySeedColor,
-      ),
-      textTheme: appTextTheme.apply(bodyColor: Colors.white, displayColor: Colors.white),
-      appBarTheme: AppBarTheme(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        titleTextStyle: GoogleFonts.oswald(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.black,
-          backgroundColor: primarySeedColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          textStyle: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w500),
-        ),
-      ),
-    );
+    final ThemeData darkTheme = lightTheme;
 
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp.router(
-          routerConfig: AppRouter.router,
-          title: 'Okoaloan',
+          routerConfig: appRouter.router,
+          title: 'Mkopo Wetu',
           theme: lightTheme,
           darkTheme: darkTheme,
           themeMode: themeProvider.themeMode,

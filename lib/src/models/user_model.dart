@@ -15,9 +15,6 @@ class User {
   final String? employmentStatus;
   final double? monthlyIncome;
   final double? monthlyExpenses;
-  final String? firstName;
-  final String? lastName;
-  final String? nationalId;
   final bool isVerified;
 
   User({
@@ -37,9 +34,6 @@ class User {
     this.employmentStatus,
     this.monthlyIncome,
     this.monthlyExpenses,
-    this.firstName,
-    this.lastName,
-    this.nationalId,
     this.isVerified = false,
   });
 
@@ -61,9 +55,6 @@ class User {
       employmentStatus: json['employmentStatus'],
       monthlyIncome: json['monthlyIncome']?.toDouble(),
       monthlyExpenses: json['monthlyExpenses']?.toDouble(),
-      firstName: json['firstName'],
-      lastName: json['lastName'],
-      nationalId: json['nationalId'],
       isVerified: json['isVerified'] ?? false,
     );
   }
@@ -86,17 +77,62 @@ class User {
       'employmentStatus': employmentStatus,
       'monthlyIncome': monthlyIncome,
       'monthlyExpenses': monthlyExpenses,
-      'firstName': firstName,
-      'lastName': lastName,
-      'nationalId': nationalId,
       'isVerified': isVerified,
     };
   }
 
+  User copyWith({
+    String? uid,
+    String? name,
+    String? phoneNumber,
+    String? email,
+    String? idNumber,
+    String? dob,
+    String? gender,
+    String? maritalStatus,
+    String? county,
+    String? city,
+    String? address,
+    String? otp,
+    double? loanLimit,
+    String? employmentStatus,
+    double? monthlyIncome,
+    double? monthlyExpenses,
+    bool? isVerified,
+  }) {
+    return User(
+      uid: uid ?? this.uid,
+      name: name ?? this.name,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      email: email ?? this.email,
+      idNumber: idNumber ?? this.idNumber,
+      dob: dob ?? this.dob,
+      gender: gender ?? this.gender,
+      maritalStatus: maritalStatus ?? this.maritalStatus,
+      county: county ?? this.county,
+      city: city ?? this.city,
+      address: address ?? this.address,
+      otp: otp ?? this.otp,
+      loanLimit: loanLimit ?? this.loanLimit,
+      employmentStatus: employmentStatus ?? this.employmentStatus,
+      monthlyIncome: monthlyIncome ?? this.monthlyIncome,
+      monthlyExpenses: monthlyExpenses ?? this.monthlyExpenses,
+      isVerified: isVerified ?? this.isVerified,
+    );
+  }
+
   bool isPersonalInfoComplete() {
-    return firstName != null &&
-        lastName != null &&
-        nationalId != null;
+    return name != null &&
+        idNumber != null &&
+        dob != null &&
+        gender != null &&
+        maritalStatus != null;
+  }
+
+  bool isFinancialInfoComplete() {
+    return employmentStatus != null &&
+        monthlyIncome != null &&
+        monthlyExpenses != null;
   }
 
   bool isResidentialInfoComplete() {

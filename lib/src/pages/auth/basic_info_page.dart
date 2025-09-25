@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:okoa_loan/src/services/ad_manager.dart';
+import 'package:mkopo_wetu/src/providers/auth_provider.dart';
+import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
 import 'package:provider/provider.dart';
-import 'package:okoa_loan/src/providers/auth_provider.dart';
 
 class BasicInfoPage extends StatefulWidget {
   const BasicInfoPage({super.key});
@@ -18,14 +17,10 @@ class _BasicInfoPageState extends State<BasicInfoPage> {
   final _cityController = TextEditingController();
   final _addressController = TextEditingController();
   bool _isLoading = false;
-  BannerAd? _bannerAd;
 
   @override
   void initState() {
     super.initState();
-    _bannerAd = AdManager.getBannerAd();
-    _bannerAd?.load();
-
     // Use post-frame callback to access provider safely
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -41,7 +36,6 @@ class _BasicInfoPageState extends State<BasicInfoPage> {
 
   @override
   void dispose() {
-    _bannerAd?.dispose();
     _countyController.dispose();
     _cityController.dispose();
     _addressController.dispose();
@@ -62,7 +56,7 @@ class _BasicInfoPageState extends State<BasicInfoPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                 const Text(
+                const Text(
                   'Tell Us Where You Live',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
@@ -76,20 +70,32 @@ class _BasicInfoPageState extends State<BasicInfoPage> {
                 const SizedBox(height: 48),
                 TextFormField(
                   controller: _countyController,
-                  decoration: const InputDecoration(labelText: 'County', prefixIcon: Icon(Icons.location_city_outlined), border: OutlineInputBorder()),
-                  validator: (value) => value!.isEmpty ? 'Please enter your county' : null,
+                  decoration: const InputDecoration(
+                      labelText: 'County',
+                      prefixIcon: Icon(Icons.location_city_outlined),
+                      border: OutlineInputBorder()),
+                  validator: (value) =>
+                      value!.isEmpty ? 'Please enter your county' : null,
                 ),
                 const SizedBox(height: 20),
                 TextFormField(
                   controller: _cityController,
-                  decoration: const InputDecoration(labelText: 'City/Town', prefixIcon: Icon(Icons.business_outlined), border: OutlineInputBorder()),
-                  validator: (value) => value!.isEmpty ? 'Please enter your city' : null,
+                  decoration: const InputDecoration(
+                      labelText: 'City/Town',
+                      prefixIcon: Icon(Icons.business_outlined),
+                      border: OutlineInputBorder()),
+                  validator: (value) =>
+                      value!.isEmpty ? 'Please enter your city' : null,
                 ),
                 const SizedBox(height: 20),
                 TextFormField(
                   controller: _addressController,
-                  decoration: const InputDecoration(labelText: 'Residential Address', prefixIcon: Icon(Icons.home_work_outlined), border: OutlineInputBorder()),
-                  validator: (value) => value!.isEmpty ? 'Please enter your address' : null,
+                  decoration: const InputDecoration(
+                      labelText: 'Residential Address',
+                      prefixIcon: Icon(Icons.home_work_outlined),
+                      border: OutlineInputBorder()),
+                  validator: (value) =>
+                      value!.isEmpty ? 'Please enter your address' : null,
                 ),
                 const SizedBox(height: 30),
                 _isLoading
@@ -106,23 +112,26 @@ class _BasicInfoPageState extends State<BasicInfoPage> {
                               );
                               context.go('/personal-info');
                             } catch (e) {
-                               if (mounted) {
+                              if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Failed to save info: ${e.toString()}')),
+                                  SnackBar(
+                                      content: Text(
+                                          'Failed to save info: ${e.toString()}')),
                                 );
-                               }
+                              }
                             } finally {
-                               if (mounted) {
+                              if (mounted) {
                                 setState(() => _isLoading = false);
-                               }
+                              }
                             }
                           }
                         },
-                        child: const Text('Next', style: TextStyle(fontSize: 18)),
+                        child:
+                            const Text('Next', style: TextStyle(fontSize: 18)),
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 50),
-                           backgroundColor: Theme.of(context).primaryColor,
-                           foregroundColor: Colors.white,
+                          backgroundColor: Theme.of(context).primaryColor,
+                          foregroundColor: Colors.white,
                         ),
                       ),
               ],
@@ -130,13 +139,7 @@ class _BasicInfoPageState extends State<BasicInfoPage> {
           ),
         ),
       ),
-      bottomNavigationBar: _bannerAd != null
-          ? SizedBox(
-              width: _bannerAd!.size.width.toDouble(),
-              height: _bannerAd!.size.height.toDouble(),
-              child: AdWidget(ad: _bannerAd!),
-            )
-          : const SizedBox.shrink(),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 }

@@ -1,22 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:okoa_loan/src/models/loan_model.dart';
+import 'package:mkopo_wetu/src/models/loan_model.dart';
+import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
+import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
 
-class LoanDetailsPage extends StatelessWidget {
+class LoanDetailsPage extends StatefulWidget {
   final Loan loan;
 
   const LoanDetailsPage({super.key, required this.loan});
 
   @override
+  State<LoanDetailsPage> createState() => _LoanDetailsPageState();
+}
+
+class _LoanDetailsPageState extends State<LoanDetailsPage> {
+  final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
+
+  @override
+  void initState() {
+    super.initState();
+    _interstitialAdWidget.loadAd();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _interstitialAdWidget.showAd();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final repaymentDate = loan.date.add(Duration(days: loan.repaymentPeriod));
-    final interest = loan.amount * 0.05; // 5% interest
-    final totalRepayable = loan.amount + interest;
+    final repaymentDate =
+        widget.loan.date.add(Duration(days: widget.loan.repaymentPeriod));
+    final interest = widget.loan.amount * 0.05; // 5% interest
+    final totalRepayable = widget.loan.amount + interest;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Loan Details'),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/loan-history');
+            }
+          },
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
@@ -25,11 +55,12 @@ class LoanDetailsPage extends StatelessWidget {
           const SizedBox(height: 24),
           _buildDetailsCard(context, repaymentDate, totalRepayable, interest),
           const SizedBox(height: 24),
-          if (loan.status == 'approved')
+          if (widget.loan.status == 'approved')
             ElevatedButton.icon(
               icon: const Icon(Icons.payment, color: Colors.white),
-              label: const Text('Repay Loan', style: TextStyle(fontSize: 18, color: Colors.white)),
-              onPressed: () { /* Repayment logic here */ },
+              label: const Text('Repay Loan',
+                  style: TextStyle(fontSize: 18, color: Colors.white)),
+              onPressed: () {/* Repayment logic here */},
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).primaryColor,
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -40,11 +71,13 @@ class LoanDetailsPage extends StatelessWidget {
             )
         ],
       ),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 
   Widget _buildHeaderCard(BuildContext context) {
-    final statusText = loan.status.substring(0, 1).toUpperCase() + loan.status.substring(1);
+    final statusText = widget.loan.status.substring(0, 1).toUpperCase() +
+        widget.loan.status.substring(1);
 
     return Card(
       elevation: 4,
@@ -52,8 +85,8 @@ class LoanDetailsPage extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-           borderRadius: BorderRadius.circular(16),
-           gradient: LinearGradient(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
             colors: [Theme.of(context).primaryColor, Colors.green.shade300],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -61,15 +94,22 @@ class LoanDetailsPage extends StatelessWidget {
         ),
         child: Column(
           children: [
-            const Text('Loan Amount', style: TextStyle(fontSize: 18, color: Colors.white70)),
+            const Text('Loan Amount',
+                style: TextStyle(fontSize: 18, color: Colors.white70)),
             const SizedBox(height: 8),
             Text(
-              'KSh ${loan.amount.toStringAsFixed(0)}',
-              style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.white),
+              'KSh ${widget.loan.amount.toStringAsFixed(0)}',
+              style: const TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white),
             ),
             const SizedBox(height: 16),
             Chip(
-              label: Text(statusText, style: TextStyle(color: _getStatusColor(loan.status), fontWeight: FontWeight.bold)),
+              label: Text(statusText,
+                  style: TextStyle(
+                      color: _getStatusColor(widget.loan.status),
+                      fontWeight: FontWeight.bold)),
               backgroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             )
@@ -79,8 +119,9 @@ class LoanDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailsCard(BuildContext context, DateTime repaymentDate, double totalRepayable, double interest) {
-     return Card(
+  Widget _buildDetailsCard(BuildContext context, DateTime repaymentDate,
+      double totalRepayable, double interest) {
+    return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -88,22 +129,34 @@ class LoanDetailsPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Details',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const Divider(height: 24),
-            _buildDetailRow('Order Number', loan.id, icon: Icons.confirmation_number_outlined),
-            _buildDetailRow('Loan Term', '${loan.repaymentPeriod} days', icon: Icons.date_range_outlined),
-            _buildDetailRow('Filing Date', DateFormat('MMM dd, yyyy').format(loan.date), icon: Icons.calendar_today_outlined),
-            _buildDetailRow('Repayment Date', DateFormat('MMM dd, yyyy').format(repaymentDate), icon: Icons.event_available_outlined),
+            _buildDetailRow('Order Number', widget.loan.id,
+                icon: Icons.confirmation_number_outlined),
+            _buildDetailRow('Loan Term', '${widget.loan.repaymentPeriod} days',
+                icon: Icons.date_range_outlined),
+            _buildDetailRow(
+                'Filing Date', DateFormat('MMM dd, yyyy').format(widget.loan.date),
+                icon: Icons.calendar_today_outlined),
+            _buildDetailRow('Repayment Date',
+                DateFormat('MMM dd, yyyy').format(repaymentDate),
+                icon: Icons.event_available_outlined),
             const Divider(height: 24),
-            _buildDetailRow('Interest (5%)', 'KSh ${interest.toStringAsFixed(2)}', icon: Icons.trending_up_outlined),
-            _buildDetailRow('Amount Repayable', 'KSh ${totalRepayable.toStringAsFixed(2)}', icon: Icons.receipt_long_outlined, isBold: true),
+            _buildDetailRow(
+                'Interest (5%)', 'KSh ${interest.toStringAsFixed(2)}',
+                icon: Icons.trending_up_outlined),
+            _buildDetailRow(
+                'Amount Repayable', 'KSh ${totalRepayable.toStringAsFixed(2)}',
+                icon: Icons.receipt_long_outlined, isBold: true),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDetailRow(String title, String value, {required IconData icon, bool isBold = false}) {
+  Widget _buildDetailRow(String title, String value,
+      {required IconData icon, bool isBold = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Row(
@@ -112,7 +165,10 @@ class LoanDetailsPage extends StatelessWidget {
           const SizedBox(width: 16),
           Text(title, style: TextStyle(fontSize: 16, color: Colors.grey[700])),
           const Spacer(),
-          Text(value, style: TextStyle(fontSize: 16, fontWeight: isBold ? FontWeight.bold : FontWeight.w500)),
+          Text(value,
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: isBold ? FontWeight.bold : FontWeight.w500)),
         ],
       ),
     );

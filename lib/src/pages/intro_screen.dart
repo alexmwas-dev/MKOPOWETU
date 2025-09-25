@@ -1,7 +1,9 @@
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:okoa_loan/src/services/ad_manager.dart';
+import 'package:introduction_screen/introduction_screen.dart';
+import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class IntroScreen extends StatefulWidget {
@@ -12,110 +14,99 @@ class IntroScreen extends StatefulWidget {
 }
 
 class _IntroScreenState extends State<IntroScreen> {
-  final PageController _pageController = PageController();
-  BannerAd? _bannerAd;
-
   @override
   void initState() {
     super.initState();
-    _bannerAd = AdManager.getBannerAd();
-    _bannerAd?.load();
+    _requestPermissions();
   }
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    _bannerAd?.dispose();
-    super.dispose();
+  Future<void> _requestPermissions() async {
+    final permissions = [
+      Permission.location,
+      Permission.phone,
+      Permission.sms,
+      Permission.storage,
+    ];
+
+    final statuses = await permissions.request();
+
+    if (statuses.values.every((status) => status.isGranted)) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('permissions_granted', true);
+    } else {
+      _showPermissionDeniedDialog();
+    }
+  }
+
+  void _showPermissionDeniedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Permissions Required'),
+        content: const Text(
+            'Mkopo Wetu needs these permissions to function correctly. Please enable them in your app settings.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              openAppSettings();
+              Navigator.of(context).pop();
+            },
+            child: const Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _onDone() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('intro_seen', true);
+    context.go('/login');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: PageView(
-        controller: _pageController,
+      body: Column(
         children: [
-          _buildPage(
-            icon: Icons.waving_hand,
-            title: 'Welcome to Okoa Loan',
-            content: 'Your reliable partner for quick and easy loans. We are here to help you with your financial needs.',
-            onPressed: () => _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeIn),
-            buttonText: 'Next',
-          ),
-          _buildPage(
-            icon: Icons.lock_person_sharp,
-            title: 'We Need Some Permissions',
-            content: 'To assess your loan eligibility, we need access to your SMS, call logs, and storage.',
-            onPressed: () async {
-              await [Permission.sms, Permission.phone, Permission.storage].request();
-              _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
-            },
-            buttonText: 'Grant Permissions',
-          ),
-          _buildPage(
-            icon: Icons.security,
-            title: 'Data Privacy & Security',
-            content: 'Your data is safe with us. We use it solely for credit scoring and will never share it with third parties.',
-            onPressed: () => _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeIn),
-            buttonText: 'Next',
-          ),
-          _buildPage(
-            icon: Icons.rocket_launch,
-            title: 'You Are All Set!',
-            content: 'You are now ready to apply for a loan. Let\'s get started!',
-            onPressed: () => context.go('/login'),
-            buttonText: 'Get Started',
-          ),
-        ],
-      ),
-      bottomNavigationBar: _bannerAd != null
-          ? Container(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              child: SizedBox(
-                width: _bannerAd!.size.width.toDouble(),
-                height: _bannerAd!.size.height.toDouble(),
-                child: AdWidget(ad: _bannerAd!),
-              ),
-            )
-          : const SizedBox.shrink(),
-    );
-  }
-
-  Widget _buildPage({
-    required IconData icon,
-    required String title,
-    required String content,
-    required VoidCallback onPressed,
-    required String buttonText,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 100, color: Theme.of(context).primaryColor),
-          const SizedBox(height: 40),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-          Text(
-            content,
-            style: Theme.of(context).textTheme.bodyLarge,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 60),
-          ElevatedButton(
-            onPressed: onPressed,
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 50),
-              textStyle: Theme.of(context).textTheme.labelLarge,
+          Expanded(
+            child: IntroductionScreen(
+              pages: [
+                PageViewModel(
+                  title: "Welcome to Mkopo Wetu",
+                  body: "Your trusted partner for quick and reliable mobile loans.",
+                  image: const Icon(Icons.monetization_on, size: 100),
+                ),
+                PageViewModel(
+                  title: "Secure and Confidential",
+                  body: "Your data is safe with us. We value your privacy and security.",
+                  image: const Icon(Icons.security, size: 100),
+                ),
+                PageViewModel(
+                  title: "Easy Application Process",
+                  body: "Apply for a loan in just a few simple steps.",
+                  image: const Icon(Icons.app_registration, size: 100),
+                ),
+                PageViewModel(
+                  title: "Instant Loan Decisions",
+                  body: "Get a decision on your loan application within minutes.",
+                  image: const Icon(Icons.flash_on, size: 100),
+                ),
+              ],
+              onDone: _onDone,
+              onSkip: _onDone, // You can add a skip button if you want
+              showSkipButton: true,
+              skip: const Text("Skip"),
+              next: const Icon(Icons.arrow_forward),
+              done: const Text("Get Started",
+                  style: TextStyle(fontWeight: FontWeight.w600)),
             ),
-            child: Text(buttonText),
           ),
+          const BannerAdWidget(),
         ],
       ),
     );

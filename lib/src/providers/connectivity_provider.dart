@@ -10,7 +10,9 @@ class ConnectivityProvider with ChangeNotifier {
   ConnectivityProvider() {
     _connectivityResult = ConnectivityResult.none;
     _checkInitialConnectivity();
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> result) {
+    _connectivitySubscription = Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> result) {
       _updateConnectivityStatus(result.first);
     });
   }

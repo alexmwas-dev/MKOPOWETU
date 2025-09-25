@@ -49,7 +49,8 @@ class _RecipientNotificationState extends State<RecipientNotification>
           elevation: 4.0,
           borderRadius: BorderRadius.circular(30.0),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             decoration: BoxDecoration(
               color: Colors.white.withAlpha(230),
               borderRadius: BorderRadius.circular(30.0),
@@ -58,12 +59,14 @@ class _RecipientNotificationState extends State<RecipientNotification>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.volume_up_outlined, color: Theme.of(context).primaryColor, size: 20),
+                Icon(Icons.volume_up_outlined,
+                    color: Theme.of(context).primaryColor, size: 20),
                 const SizedBox(width: 8.0),
                 Expanded(
                   child: Text(
                     widget.message,
-                    style: const TextStyle(fontSize: 12.0, fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                        fontSize: 12.0, fontWeight: FontWeight.w500),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:okoa_loan/src/services/ad_manager.dart';
-import 'package:provider/provider.dart';
-import 'package:okoa_loan/src/providers/auth_provider.dart';
+import 'package:mkopo_wetu/src/providers/auth_provider.dart';
+import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
 import 'package:pinput/pinput.dart';
+import 'package:provider/provider.dart';
+import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
 
 class OtpPage extends StatefulWidget {
   const OtpPage({super.key});
@@ -18,18 +18,19 @@ class _OtpPageState extends State<OtpPage> {
   final _pinController = TextEditingController();
   bool _isLoading = false;
   bool _isResending = false;
-  BannerAd? _bannerAd;
+  final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
 
   @override
   void initState() {
     super.initState();
-    _bannerAd = AdManager.getBannerAd();
-    _bannerAd?.load();
+    _interstitialAdWidget.loadAd();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _interstitialAdWidget.showAd();
+    });
   }
 
   @override
   void dispose() {
-    _bannerAd?.dispose();
     _pinController.dispose();
     super.dispose();
   }
@@ -64,14 +65,15 @@ class _OtpPageState extends State<OtpPage> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'We have sent the code verification to your mobile number',
+                  'We have sent a verification code to your mobile number.',
                   style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   authProvider.user?.phoneNumber ?? '',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
@@ -85,7 +87,9 @@ class _OtpPageState extends State<OtpPage> {
                     ),
                   ),
                   validator: (s) {
-                    if (s == null || s.isEmpty) return 'Please enter the OTP';
+                    if (s == null || s.isEmpty) {
+                      return 'Please enter the OTP.';
+                    }
                     return null;
                   },
                 ),
@@ -97,18 +101,27 @@ class _OtpPageState extends State<OtpPage> {
                           if (_formKey.currentState!.validate()) {
                             setState(() => _isLoading = true);
                             try {
-                              final isVerified = await authProvider.verifyOtp(_pinController.text);
+                              final isVerified = await authProvider
+                                  .verifyOtp(_pinController.text);
                               if (isVerified && mounted) {
-                                context.go('/basic-info');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Phone number verified successfully!')),
+                                );
+                                context.go('/personal-info');
                               } else if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Invalid OTP. Please try again.')),
+                                  const SnackBar(
+                                      content: Text(
+                                          'Invalid OTP. Please try again.')),
                                 );
                               }
                             } catch (e) {
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('An error occurred: ${e.toString()}')),
+                                  const SnackBar(
+                                      content: Text(
+                                          'An error occurred. Please try again.')),
                                 );
                               }
                             } finally {
@@ -120,10 +133,11 @@ class _OtpPageState extends State<OtpPage> {
                         },
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 50),
-                           backgroundColor: Theme.of(context).primaryColor,
-                           foregroundColor: Colors.white,
+                          backgroundColor: Theme.of(context).primaryColor,
+                          foregroundColor: Colors.white,
                         ),
-                        child: const Text('Verify', style: TextStyle(fontSize: 18)),
+                        child: const Text('Verify',
+                            style: TextStyle(fontSize: 18)),
                       ),
                 const SizedBox(height: 24),
                 Row(
@@ -133,7 +147,10 @@ class _OtpPageState extends State<OtpPage> {
                     _isResending
                         ? const Padding(
                             padding: EdgeInsets.all(8.0),
-                            child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator()),
+                            child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator()),
                           )
                         : TextButton(
                             onPressed: () async {
@@ -141,14 +158,18 @@ class _OtpPageState extends State<OtpPage> {
                               try {
                                 await authProvider.resendOtp();
                                 if (mounted) {
-                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('A new OTP has been sent.')),
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content:
+                                            Text('A new OTP has been sent.')),
                                   );
                                 }
                               } catch (e) {
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Failed to resend OTP: ${e.toString()}')),
+                                    const SnackBar(
+                                        content: Text(
+                                            'Failed to resend OTP. Please try again.')),
                                   );
                                 }
                               } finally {
@@ -157,7 +178,8 @@ class _OtpPageState extends State<OtpPage> {
                                 }
                               }
                             },
-                            child: const Text('Resend', style: TextStyle(fontWeight: FontWeight.bold)),
+                            child: const Text('Resend',
+                                style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
                   ],
                 ),
@@ -166,13 +188,7 @@ class _OtpPageState extends State<OtpPage> {
           ),
         ),
       ),
-      bottomNavigationBar: _bannerAd != null
-          ? SizedBox(
-              width: _bannerAd!.size.width.toDouble(),
-              height: _bannerAd!.size.height.toDouble(),
-              child: AdWidget(ad: _bannerAd!),
-            )
-          : const SizedBox.shrink(),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 }

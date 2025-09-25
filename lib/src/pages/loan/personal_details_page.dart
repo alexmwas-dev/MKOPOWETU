@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:okoa_loan/src/services/ad_manager.dart';
 import 'package:provider/provider.dart';
-import 'package:okoa_loan/src/providers/auth_provider.dart';
+import 'package:mkopo_wetu/src/providers/auth_provider.dart';
+import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
+import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
 
 class PersonalDetailsPage extends StatefulWidget {
   const PersonalDetailsPage({super.key});
@@ -14,26 +14,23 @@ class PersonalDetailsPage extends StatefulWidget {
 
 class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
   final _formKey = GlobalKey<FormState>();
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
+  final _nameController = TextEditingController();
   final _nationalIdController = TextEditingController();
   final _phoneNumberController = TextEditingController();
   bool _isLoading = false;
-  BannerAd? _bannerAd;
+  final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
 
   @override
   void initState() {
     super.initState();
-    _bannerAd = AdManager.getBannerAd();
-    _bannerAd?.load();
-
+    _interstitialAdWidget.loadAd();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _interstitialAdWidget.showAd();
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final user = authProvider.user;
       if (user != null) {
-        _firstNameController.text = user.firstName ?? '';
-        _lastNameController.text = user.lastName ?? '';
-        _nationalIdController.text = user.nationalId ?? '';
+        _nameController.text = user.name ?? '';
+        _nationalIdController.text = user.idNumber ?? '';
         _phoneNumberController.text = user.phoneNumber;
         setState(() {});
       }
@@ -42,9 +39,7 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
 
   @override
   void dispose() {
-    _bannerAd?.dispose();
-    _firstNameController.dispose();
-    _lastNameController.dispose();
+    _nameController.dispose();
     _nationalIdController.dispose();
     _phoneNumberController.dispose();
     super.dispose();
@@ -55,7 +50,19 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Personal Details')),
+      appBar: AppBar(
+        title: const Text('Personal Details'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/profile');
+            }
+          },
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -64,23 +71,14 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               TextFormField(
-                controller: _firstNameController,
+                controller: _nameController,
                 decoration: const InputDecoration(
-                  labelText: 'First Name',
+                  labelText: 'Full Name',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.person),
                 ),
-                validator: (value) => value!.isEmpty ? 'Please enter your first name' : null,
-              ),
-              const SizedBox(height: 16.0),
-              TextFormField(
-                controller: _lastNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Last Name',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person_outline),
-                ),
-                validator: (value) => value!.isEmpty ? 'Please enter your last name' : null,
+                validator: (value) =>
+                    value!.isEmpty ? 'Please enter your full name.' : null,
               ),
               const SizedBox(height: 16.0),
               TextFormField(
@@ -90,7 +88,8 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.badge),
                 ),
-                validator: (value) => value!.isEmpty ? 'Please enter your National ID' : null,
+                validator: (value) =>
+                    value!.isEmpty ? 'Please enter your National ID.' : null,
               ),
               const SizedBox(height: 16.0),
               TextFormField(
@@ -101,7 +100,8 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
                   prefixIcon: Icon(Icons.phone),
                 ),
                 keyboardType: TextInputType.phone,
-                validator: (value) => value!.isEmpty ? 'Please enter your phone number' : null,
+                validator: (value) =>
+                    value!.isEmpty ? 'Please enter your phone number.' : null,
               ),
               const SizedBox(height: 32.0),
               _isLoading
@@ -111,39 +111,47 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
                         if (_formKey.currentState!.validate()) {
                           setState(() => _isLoading = true);
                           try {
-                            await authProvider.updatePersonalDetails(
-                              _firstNameController.text,
-                              _lastNameController.text,
+                            final user = authProvider.user;
+                            await authProvider.updatePersonalInfo(
+                              _nameController.text,
+                              user?.email ?? '',
                               _nationalIdController.text,
-                              _phoneNumberController.text,
+                              user?.dob ?? '',
+                              user?.gender ?? '',
+                              user?.maritalStatus ?? '',
                             );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Personal details saved!')),
-                            );
-                             context.go('/profile');
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Your personal details have been saved successfully.')),
+                              );
+                              context.go('/profile');
+                            }
                           } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Failed to save details: ${e.toString()}')),
-                            );
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'An error occurred while saving your details. Please try again.')),
+                              );
+                            }
                           } finally {
-                            setState(() => _isLoading = false);
+                            if (mounted) {
+                              setState(() => _isLoading = false);
+                            }
                           }
                         }
                       },
-                      style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16.0)),
+                      style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16.0)),
                       child: const Text('Save & Continue'),
                     ),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: _bannerAd != null
-          ? SizedBox(
-              width: _bannerAd!.size.width.toDouble(),
-              height: _bannerAd!.size.height.toDouble(),
-              child: AdWidget(ad: _bannerAd!),
-            )
-          : const SizedBox.shrink(),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 }
