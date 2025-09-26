@@ -18,7 +18,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
     super.initState();
     _interstitialAdWidget.loadAd();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _interstitialAdWidget.showAd();
+      _interstitialAdWidget.showAdWithCallback(() {});
     });
   }
 

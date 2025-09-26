@@ -22,16 +22,19 @@ class _LoanDetailsPageState extends State<LoanDetailsPage> {
     super.initState();
     _interstitialAdWidget.loadAd();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _interstitialAdWidget.showAd();
+      _interstitialAdWidget.showAdWithCallback(() {});
     });
   }
 
   @override
+  void dispose() {
+    _interstitialAdWidget.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final repaymentDate =
-        widget.loan.date.add(Duration(days: widget.loan.repaymentPeriod));
-    final interest = widget.loan.amount * 0.05; // 5% interest
-    final totalRepayable = widget.loan.amount + interest;
+    final totalRepayable = widget.loan.amount + widget.loan.interestAmount;
 
     return Scaffold(
       appBar: AppBar(
@@ -43,7 +46,7 @@ class _LoanDetailsPageState extends State<LoanDetailsPage> {
             if (context.canPop()) {
               context.pop();
             } else {
-              context.go('/loan-history');
+              context.go('/loan/history');
             }
           },
         ),
@@ -53,7 +56,7 @@ class _LoanDetailsPageState extends State<LoanDetailsPage> {
         children: [
           _buildHeaderCard(context),
           const SizedBox(height: 24),
-          _buildDetailsCard(context, repaymentDate, totalRepayable, interest),
+          _buildDetailsCard(context, totalRepayable),
           const SizedBox(height: 24),
           if (widget.loan.status == 'approved')
             ElevatedButton.icon(
@@ -119,8 +122,8 @@ class _LoanDetailsPageState extends State<LoanDetailsPage> {
     );
   }
 
-  Widget _buildDetailsCard(BuildContext context, DateTime repaymentDate,
-      double totalRepayable, double interest) {
+  Widget _buildDetailsCard(BuildContext context, double totalRepayable) {
+    final repaymentPeriod = widget.loan.repaymentDate.difference(widget.loan.date).inDays;
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -132,22 +135,22 @@ class _LoanDetailsPageState extends State<LoanDetailsPage> {
             const Text('Details',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const Divider(height: 24),
-            _buildDetailRow('Order Number', widget.loan.id,
+            _buildDetailRow('Loan ID', widget.loan.id,
                 icon: Icons.confirmation_number_outlined),
-            _buildDetailRow('Loan Term', '${widget.loan.repaymentPeriod} days',
+            _buildDetailRow('Term', '$repaymentPeriod days',
                 icon: Icons.date_range_outlined),
             _buildDetailRow(
-                'Filing Date', DateFormat('MMM dd, yyyy').format(widget.loan.date),
+                'Application Date', DateFormat('MMM dd, yyyy').format(widget.loan.date),
                 icon: Icons.calendar_today_outlined),
-            _buildDetailRow('Repayment Date',
-                DateFormat('MMM dd, yyyy').format(repaymentDate),
+            _buildDetailRow('Due Date',
+                DateFormat('MMM dd, yyyy').format(widget.loan.repaymentDate),
                 icon: Icons.event_available_outlined),
             const Divider(height: 24),
             _buildDetailRow(
-                'Interest (5%)', 'KSh ${interest.toStringAsFixed(2)}',
+                'Interest (${(widget.loan.interestRate * 100).toStringAsFixed(1)}% daily)', 'KSh ${widget.loan.interestAmount.toStringAsFixed(2)}',
                 icon: Icons.trending_up_outlined),
             _buildDetailRow(
-                'Amount Repayable', 'KSh ${totalRepayable.toStringAsFixed(2)}',
+                'Total Repayment', 'KSh ${totalRepayable.toStringAsFixed(2)}',
                 icon: Icons.receipt_long_outlined, isBold: true),
           ],
         ),

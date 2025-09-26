@@ -16,6 +16,9 @@ class LoanService {
       'amount': loan.amount,
       'date': loan.date.toIso8601String(),
       'status': loan.status,
+      'interestRate': loan.interestRate,
+      'interestAmount': loan.interestAmount,
+      'repaymentDate': loan.repaymentDate.toIso8601String(),
     });
   }
 
@@ -33,6 +36,13 @@ class LoanService {
               : loanData['amount'],
           date: DateTime.parse(loanData['date']),
           status: loanData['status'],
+          interestRate: loanData['interestRate'] is int
+              ? (loanData['interestRate'] as int).toDouble()
+              : loanData['interestRate'],
+          interestAmount: loanData['interestAmount'] is int
+              ? (loanData['interestAmount'] as int).toDouble()
+              : loanData['interestAmount'],
+          repaymentDate: DateTime.parse(loanData['repaymentDate']),
         );
       }).toList();
     }

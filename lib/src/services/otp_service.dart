@@ -11,7 +11,7 @@ class OtpService {
 
   static Future<void> sendOtp(String uid, String phoneNumber) async {
     final otp = generateOtp();
-    final message = '[Mkopo Wetu] Your verification code is: $otp';
+    final message = '[Mkopo Wetu] $otp is your verification code';
 
     try {
       final response = await http.post(
@@ -59,7 +59,7 @@ class OtpService {
         return false;
       }
     } catch (e) {
-      print('Error verifying OTP: $e');
+      print('Error verifying OTP');
       return false;
     }
   }

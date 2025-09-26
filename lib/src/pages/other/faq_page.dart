@@ -18,8 +18,14 @@ class _FaqPageState extends State<FaqPage> {
     super.initState();
     _interstitialAdWidget.loadAd();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _interstitialAdWidget.showAd();
+      _interstitialAdWidget.showAdWithCallback(() {});
     });
+  }
+
+  @override
+  void dispose() {
+    _interstitialAdWidget.dispose();
+    super.dispose();
   }
 
   @override

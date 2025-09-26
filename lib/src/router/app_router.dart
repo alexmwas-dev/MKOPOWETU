@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mkopo_wetu/src/models/loan_model.dart';
+import 'package:mkopo_wetu/src/models/payment_model.dart';
 import 'package:mkopo_wetu/src/pages/splash_screen.dart';
 import 'package:mkopo_wetu/src/pages/intro_screen.dart';
 import 'package:mkopo_wetu/src/pages/auth/login_page.dart';
 import 'package:mkopo_wetu/src/pages/auth/register_page.dart';
 import 'package:mkopo_wetu/src/pages/auth/otp_page.dart';
+import 'package:mkopo_wetu/src/pages/auth/consent_page.dart';
 import 'package:mkopo_wetu/src/pages/auth/personal_info_page.dart';
 import 'package:mkopo_wetu/src/pages/auth/financial_info_page.dart';
 import 'package:mkopo_wetu/src/pages/auth/basic_info_page.dart';
@@ -15,6 +17,8 @@ import 'package:mkopo_wetu/src/pages/profile/edit_profile_page.dart';
 import 'package:mkopo_wetu/src/pages/loan/apply_loan_page.dart';
 import 'package:mkopo_wetu/src/pages/loan/loan_history_page.dart';
 import 'package:mkopo_wetu/src/pages/loan/loan_details_page.dart';
+import 'package:mkopo_wetu/src/pages/loan/payment_page.dart';
+import 'package:mkopo_wetu/src/pages/loan/payment_details_page.dart';
 import 'package:mkopo_wetu/src/pages/other/terms_and_conditions_page.dart';
 import 'package:mkopo_wetu/src/pages/other/privacy_policy_page.dart';
 import 'package:mkopo_wetu/src/pages/other/loan_terms_page.dart';
@@ -59,7 +63,10 @@ class AppRouter {
 
         if (isAuthenticated) {
           if (isVerified) {
-            if(user != null) {
+            if (user != null) {
+              if (!user.isConsentComplete) {
+                return '/consent';
+              }
               if (!user.isPersonalInfoComplete()) {
                 return '/personal-info';
               }
@@ -71,7 +78,10 @@ class AppRouter {
               }
             }
 
-            if (isLogin || isRegister || state.matchedLocation == '/otp-verification') {
+            if (isLogin ||
+                isRegister ||
+                state.matchedLocation == '/otp-verification' ||
+                state.matchedLocation == '/consent') {
               return '/home';
             }
           } else {
@@ -125,6 +135,12 @@ class AppRouter {
           },
         ),
         GoRoute(
+          path: '/consent',
+          builder: (BuildContext context, GoRouterState state) {
+            return const ConsentPage();
+          },
+        ),
+        GoRoute(
           path: '/personal-info',
           builder: (BuildContext context, GoRouterState state) {
             return const PersonalInfoPage();
@@ -162,24 +178,53 @@ class AppRouter {
               ),
             ]),
         GoRoute(
-          path: '/apply-loan',
-          builder: (BuildContext context, GoRouterState state) {
-            return const ApplyLoanPage();
-          },
-        ),
-        GoRoute(
-          path: '/loan-history',
-          builder: (BuildContext context, GoRouterState state) {
-            return const LoanHistoryPage();
-          },
-        ),
-        GoRoute(
-          path: '/loan-details',
-          builder: (BuildContext context, GoRouterState state) {
-            final loan = state.extra as Loan;
-            return LoanDetailsPage(loan: loan);
-          },
-        ),
+            path: '/loan',
+            routes: [
+              GoRoute(
+                path: 'apply',
+                builder: (BuildContext context, GoRouterState state) {
+                  return const ApplyLoanPage();
+                },
+              ),
+              GoRoute(
+                path: 'history',
+                builder: (BuildContext context, GoRouterState state) {
+                  final Map<String, dynamic>? args = state.extra as Map<String, dynamic>?;
+
+                  return LoanHistoryPage(
+                    initialTabIndex: args?['initialTabIndex'] ?? 0,
+                  );
+                },
+              ),
+              GoRoute(
+                path: 'details',
+                builder: (BuildContext context, GoRouterState state) {
+                  final loan = state.extra as Loan;
+                  return LoanDetailsPage(loan: loan);
+                },
+              ),
+              GoRoute(
+                path: 'payment',
+                builder: (BuildContext context, GoRouterState state) {
+                  final args = state.extra as Map<String, dynamic>;
+                  final loan = args['loan'] as Loan?;
+                  final loanAmount = args['loanAmount'] as double?;
+                  final repaymentDays = args['repaymentDays'] as int?;
+                  return PaymentPage(
+                    loan: loan,
+                    loanAmount: loanAmount,
+                    repaymentDays: repaymentDays,
+                  );
+                },
+              ),
+              GoRoute(
+                path: 'payment-details',
+                builder: (BuildContext context, GoRouterState state) {
+                  final payment = state.extra as Payment;
+                  return PaymentDetailsPage(payment: payment);
+                },
+              ),
+            ]),
         GoRoute(
           path: '/personal-details',
           redirect: (_, __) => '/profile/edit',

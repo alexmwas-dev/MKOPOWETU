@@ -47,13 +47,13 @@ class _FinancialInfoPageState extends State<FinancialInfoPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Your Financial Situation',
+                'Your Financial Details',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               const Text(
-                'This information helps us understand your financial health and determine your loan limit.',
+                'This information helps us determine your loan limit.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey, fontSize: 16),
               ),
@@ -64,9 +64,8 @@ class _FinancialInfoPageState extends State<FinancialInfoPage> {
                     labelText: 'Employment Status',
                     prefixIcon: Icon(Icons.work_outline),
                     border: OutlineInputBorder()),
-                validator: (value) => value!.isEmpty
-                    ? 'Please enter your employment status'
-                    : null,
+                validator: (value) =>
+                    value!.isEmpty ? 'Employment status is required.' : null,
               ),
               const SizedBox(height: 20),
               TextFormField(
@@ -77,7 +76,7 @@ class _FinancialInfoPageState extends State<FinancialInfoPage> {
                     border: OutlineInputBorder()),
                 keyboardType: TextInputType.number,
                 validator: (value) =>
-                    value!.isEmpty ? 'Please enter your monthly income' : null,
+                    value!.isEmpty ? 'Monthly income is required.' : null,
               ),
               const SizedBox(height: 20),
               TextFormField(
@@ -87,9 +86,8 @@ class _FinancialInfoPageState extends State<FinancialInfoPage> {
                     prefixIcon: Icon(Icons.money_off_outlined),
                     border: OutlineInputBorder()),
                 keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty
-                    ? 'Please enter your estimated monthly expenses'
-                    : null,
+                validator: (value) =>
+                    value!.isEmpty ? 'Estimated monthly expenses are required.' : null,
               ),
               const SizedBox(height: 30),
               _isLoading
@@ -108,9 +106,9 @@ class _FinancialInfoPageState extends State<FinancialInfoPage> {
                           } catch (e) {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
+                                const SnackBar(
                                     content: Text(
-                                        'Failed to save info: ${e.toString()}')),
+                                        'Failed to save information. Please try again.')),
                               );
                             }
                           } finally {
@@ -125,7 +123,7 @@ class _FinancialInfoPageState extends State<FinancialInfoPage> {
                         backgroundColor: Theme.of(context).primaryColor,
                         foregroundColor: Colors.white,
                       ),
-                      child: const Text('Finish Setup',
+                      child: const Text('Complete Setup',
                           style: TextStyle(fontSize: 18)),
                     ),
             ],

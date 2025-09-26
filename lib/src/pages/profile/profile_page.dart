@@ -21,7 +21,7 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
     _interstitialAdWidget.loadAd();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _interstitialAdWidget.showAd();
+      _interstitialAdWidget.showAdWithCallback(() {});
     });
   }
 
@@ -34,7 +34,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Account'),
+        title: const Text('My Account'),
         centerTitle: true,
         elevation: 0.5,
         leading: IconButton(
@@ -65,7 +65,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.go('/apply-loan'),
+        onPressed: () => context.go('/loan/apply'),
         child: const Icon(Icons.add, color: Colors.white),
         backgroundColor: Theme.of(context).primaryColor,
         shape: const CircleBorder(),
@@ -104,11 +104,11 @@ class _ProfilePageState extends State<ProfilePage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name ?? 'Anonymous User',
+                Text(name ?? 'New User',
                     style: const TextStyle(
                         fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
-                Text(phone ?? 'No phone number',
+                Text(phone ?? 'No phone number provided',
                     style:
                         TextStyle(color: Colors.grey.shade600, fontSize: 16)),
               ],
@@ -135,15 +135,15 @@ class _ProfilePageState extends State<ProfilePage> {
         children: [
           _buildMenuItem(context,
               icon: Icons.history_outlined,
-              title: 'Loan History',
-              onTap: () => context.go('/loan-history')),
+              title: 'Transaction History',
+              onTap: () => context.go('/loan/history')),
           _buildMenuItem(context,
               icon: Icons.contact_support_outlined,
               title: 'Contact Us',
               onTap: () => context.go('/contact-us')),
           _buildMenuItem(context,
               icon: Icons.help_center_outlined,
-              title: 'Faq',
+              title: 'Frequently Asked Questions',
               onTap: () => context.go('/faq')),
           _buildMenuItem(context,
               icon: Icons.description_outlined,
@@ -160,7 +160,7 @@ class _ProfilePageState extends State<ProfilePage> {
           const Divider(height: 1, indent: 16, endIndent: 16),
           _buildMenuItem(context,
               icon: Icons.logout,
-              title: 'Logout',
+              title: 'Log Out',
               titleColor: Colors.red,
               iconColor: Colors.red, onTap: () async {
             await authProvider.logout();

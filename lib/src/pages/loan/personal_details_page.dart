@@ -25,7 +25,7 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
     super.initState();
     _interstitialAdWidget.loadAd();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _interstitialAdWidget.showAd();
+      _interstitialAdWidget.showAdWithCallback(() {});
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final user = authProvider.user;
       if (user != null) {
@@ -42,6 +42,7 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
     _nameController.dispose();
     _nationalIdController.dispose();
     _phoneNumberController.dispose();
+    _interstitialAdWidget.dispose();
     super.dispose();
   }
 

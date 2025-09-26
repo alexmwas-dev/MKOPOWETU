@@ -62,7 +62,7 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
         _dobController.text = DateFormat('yyyy-MM-dd').format(picked);
       });
     }
-    }
+  }
 
   @override
   void dispose() {
@@ -93,13 +93,13 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'A Bit About Yourself',
+                'Tell Us About Yourself',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               const Text(
-                'This information is used for identity verification and to determine loan eligibility.',
+                'This information is for identity verification and loan eligibility.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey, fontSize: 16),
               ),
@@ -111,7 +111,7 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
                     prefixIcon: Icon(Icons.person_outline),
                     border: OutlineInputBorder()),
                 validator: (value) =>
-                    value!.isEmpty ? 'Please enter your full name' : null,
+                    value!.isEmpty ? 'Full name is required.' : null,
               ),
               const SizedBox(height: 20),
               TextFormField(
@@ -121,17 +121,17 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
                     prefixIcon: Icon(Icons.email_outlined),
                     border: OutlineInputBorder()),
                 validator: (value) =>
-                    value!.isEmpty ? 'Please enter your email' : null,
+                    value!.isEmpty ? 'Email address is required.' : null,
               ),
               const SizedBox(height: 20),
               TextFormField(
                 controller: _idController,
                 decoration: const InputDecoration(
-                    labelText: 'National ID',
+                    labelText: 'National ID Number',
                     prefixIcon: Icon(Icons.credit_card_outlined),
                     border: OutlineInputBorder()),
                 validator: (value) =>
-                    value!.isEmpty ? 'Please enter your National ID' : null,
+                    value!.isEmpty ? 'National ID is required.' : null,
               ),
               const SizedBox(height: 20),
               TextFormField(
@@ -144,7 +144,7 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
                 readOnly: true,
                 onTap: _selectDate,
                 validator: (value) =>
-                    value!.isEmpty ? 'Please select your date of birth' : null,
+                    value!.isEmpty ? 'Date of birth is required.' : null,
               ),
               const SizedBox(height: 20),
               DropdownButtonFormField<String>(
@@ -164,8 +164,7 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
                     _gender = newValue;
                   });
                 },
-                validator: (value) =>
-                    value == null ? 'Please select your gender' : null,
+                validator: (value) => value == null ? 'Gender is required.' : null,
               ),
               const SizedBox(height: 20),
               DropdownButtonFormField<String>(
@@ -187,7 +186,7 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
                   });
                 },
                 validator: (value) =>
-                    value == null ? 'Please select your marital status' : null,
+                    value == null ? 'Marital status is required.' : null,
               ),
               const SizedBox(height: 30),
               _isLoading
@@ -209,9 +208,9 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
                           } catch (e) {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
+                                const SnackBar(
                                     content: Text(
-                                        'Failed to save info: ${e.toString()}')),
+                                        'Failed to save information. Please try again.')),
                               );
                             }
                           } finally {
@@ -226,7 +225,7 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
                         backgroundColor: Theme.of(context).primaryColor,
                         foregroundColor: Colors.white,
                       ),
-                      child: const Text('Continue',
+                      child: const Text('Save & Continue',
                           style: TextStyle(fontSize: 18)),
                     ),
             ],

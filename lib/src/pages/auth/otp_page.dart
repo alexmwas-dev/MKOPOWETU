@@ -5,6 +5,7 @@ import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
 import 'package:pinput/pinput.dart';
 import 'package:provider/provider.dart';
 import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
+import 'package:sms_autofill/sms_autofill.dart';
 
 class OtpPage extends StatefulWidget {
   const OtpPage({super.key});
@@ -13,7 +14,7 @@ class OtpPage extends StatefulWidget {
   State<OtpPage> createState() => _OtpPageState();
 }
 
-class _OtpPageState extends State<OtpPage> {
+class _OtpPageState extends State<OtpPage> with CodeAutoFill {
   final _formKey = GlobalKey<FormState>();
   final _pinController = TextEditingController();
   bool _isLoading = false;
@@ -25,14 +26,59 @@ class _OtpPageState extends State<OtpPage> {
     super.initState();
     _interstitialAdWidget.loadAd();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _interstitialAdWidget.showAd();
+      _interstitialAdWidget.showAdWithCallback(() {});
     });
+    _listenForCode();
+  }
+
+  void _listenForCode() async {
+    await SmsAutoFill().listenForCode;
+    final signature = await SmsAutoFill().getAppSignature;
+    print("App Signature: $signature");
+  }
+
+  @override
+  void codeUpdated() {
+    _pinController.text = code!;
+    _verifyOtp(_pinController.text);
   }
 
   @override
   void dispose() {
     _pinController.dispose();
+    _interstitialAdWidget.dispose();
+    cancel(); // From CodeAutoFill mixin
     super.dispose();
+  }
+
+  Future<void> _verifyOtp(String pin) async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+      try {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final isVerified = await authProvider.verifyOtp(pin);
+        if (isVerified && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Phone number successfully verified.')),
+          );
+          context.go('/consent');
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Invalid verification code. Please try again.')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('An error occurred during verification. Please try again.')),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+    }
   }
 
   @override
@@ -50,7 +96,7 @@ class _OtpPageState extends State<OtpPage> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('OTP Verification')),
+      appBar: AppBar(title: const Text('Verify Phone Number')),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -65,7 +111,7 @@ class _OtpPageState extends State<OtpPage> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'We have sent a verification code to your mobile number.',
+                  'A 6-digit verification code has been sent to your registered phone number.',
                   style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                   textAlign: TextAlign.center,
                 ),
@@ -86,9 +132,10 @@ class _OtpPageState extends State<OtpPage> {
                       border: Border.all(color: Theme.of(context).primaryColor),
                     ),
                   ),
+                  onCompleted: (pin) => _verifyOtp(pin),
                   validator: (s) {
                     if (s == null || s.isEmpty) {
-                      return 'Please enter the OTP.';
+                      return 'Please enter the 6-digit verification code.';
                     }
                     return null;
                   },
@@ -97,46 +144,13 @@ class _OtpPageState extends State<OtpPage> {
                 _isLoading
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
-                        onPressed: () async {
-                          if (_formKey.currentState!.validate()) {
-                            setState(() => _isLoading = true);
-                            try {
-                              final isVerified = await authProvider
-                                  .verifyOtp(_pinController.text);
-                              if (isVerified && mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text('Phone number verified successfully!')),
-                                );
-                                context.go('/personal-info');
-                              } else if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'Invalid OTP. Please try again.')),
-                                );
-                              }
-                            } catch (e) {
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'An error occurred. Please try again.')),
-                                );
-                              }
-                            } finally {
-                              if (mounted) {
-                                setState(() => _isLoading = false);
-                              }
-                            }
-                          }
-                        },
+                        onPressed: () => _verifyOtp(_pinController.text),
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 50),
                           backgroundColor: Theme.of(context).primaryColor,
                           foregroundColor: Colors.white,
                         ),
-                        child: const Text('Verify',
+                        child: const Text('Verify & Proceed',
                             style: TextStyle(fontSize: 18)),
                       ),
                 const SizedBox(height: 24),
@@ -160,8 +174,7 @@ class _OtpPageState extends State<OtpPage> {
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                        content:
-                                            Text('A new OTP has been sent.')),
+                                        content: Text('A new verification code has been sent.')),
                                   );
                                 }
                               } catch (e) {
@@ -169,7 +182,7 @@ class _OtpPageState extends State<OtpPage> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                         content: Text(
-                                            'Failed to resend OTP. Please try again.')),
+                                            'Failed to resend code. Please try again shortly.')),
                                   );
                                 }
                               } finally {
@@ -178,7 +191,7 @@ class _OtpPageState extends State<OtpPage> {
                                 }
                               }
                             },
-                            child: const Text('Resend',
+                            child: const Text('Resend Code',
                                 style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
                   ],

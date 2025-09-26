@@ -24,7 +24,7 @@ class _RegisterPageState extends State<RegisterPage> {
     super.initState();
     _interstitialAdWidget.loadAd();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _interstitialAdWidget.showAd();
+      _interstitialAdWidget.showAdWithCallback(() {});
     });
   }
 
@@ -32,6 +32,7 @@ class _RegisterPageState extends State<RegisterPage> {
   void dispose() {
     _phoneController.dispose();
     _passwordController.dispose();
+    _interstitialAdWidget.dispose();
     super.dispose();
   }
 
@@ -54,13 +55,13 @@ class _RegisterPageState extends State<RegisterPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Create an Account',
+                  'Create Account',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Enter your phone number and a secure password to get started.',
+                  'Enter your phone number and a secure password to create an account.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey, fontSize: 16),
                 ),
@@ -75,7 +76,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   keyboardType: TextInputType.phone,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your phone number.';
+                      return 'Phone number is required.';
                     }
                     return null;
                   },
@@ -85,13 +86,13 @@ class _RegisterPageState extends State<RegisterPage> {
                   controller: _passwordController,
                   decoration: const InputDecoration(
                     labelText: 'Password',
-                    prefixIcon: Icon(Icons.lock_outline),
+                    prefixIcon: Icon(Icons.lock_outlined),
                     border: OutlineInputBorder(),
                   ),
                   obscureText: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password.';
+                      return 'Password is required.';
                     }
                     if (value.length < 6) {
                       return 'Password must be at least 6 characters long.';
@@ -122,7 +123,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                      content: Text('Registration successful! Please verify your phone number.')),
+                                      content: Text('Registration successful. Please verify your phone number to continue.')),
                                 );
                                 context.go('/otp');
                               }
@@ -130,7 +131,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                      content: Text('Registration failed. Please try again.')),
+                                      content: Text('Registration failed. An error occurred.')),
                                 );
                               }
                             } finally {
@@ -140,7 +141,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             }
                           }
                         },
-                        child: const Text('Register',
+                        child: const Text('Create Account',
                             style: TextStyle(fontSize: 18)),
                       ),
                 const SizedBox(height: 24),
@@ -151,7 +152,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     TextButton(
                       onPressed: () => context.go('/'),
                       child: Text(
-                        'Login',
+                        'Sign In',
                         style: TextStyle(
                             color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.bold),

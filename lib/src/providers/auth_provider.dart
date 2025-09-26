@@ -173,6 +173,19 @@ class AuthProvider with ChangeNotifier {
     });
   }
 
+  Future<void> updateUser({
+    bool? isConsentComplete,
+  }) async {
+    Map<String, dynamic> details = {};
+    if (isConsentComplete != null) {
+      details['isConsentComplete'] = isConsentComplete;
+    }
+
+    if (details.isNotEmpty) {
+      await updateUserDetails(details);
+    }
+  }
+
   Future<void> logout() async {
     developer.log('User logging out.', name: 'AuthProvider.logout');
     await _auth.signOut();

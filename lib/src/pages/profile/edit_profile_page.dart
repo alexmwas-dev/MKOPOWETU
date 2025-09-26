@@ -23,7 +23,7 @@ class _EditProfilePageState extends State<EditProfilePage>
     _tabController = TabController(length: 2, vsync: this);
     _interstitialAdWidget.loadAd();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _interstitialAdWidget.showAd();
+      _interstitialAdWidget.showAdWithCallback(() {});
     });
   }
 
@@ -121,21 +121,21 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                 controller: _nameController,
                 decoration: const InputDecoration(
                     labelText: 'Full Name', border: OutlineInputBorder()),
-                validator: (value) => value!.isEmpty ? 'Required' : null,
+                validator: (value) => value!.isEmpty ? 'Full name is required.' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(
-                    labelText: 'Email', border: OutlineInputBorder()),
-                validator: (value) => value!.isEmpty ? 'Required' : null,
+                    labelText: 'Email Address', border: OutlineInputBorder()),
+                validator: (value) => value!.isEmpty ? 'Email address is required.' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _idController,
                 decoration: const InputDecoration(
-                    labelText: 'National ID', border: OutlineInputBorder()),
-                validator: (value) => value!.isEmpty ? 'Required' : null,
+                    labelText: 'National ID Number', border: OutlineInputBorder()),
+                validator: (value) => value!.isEmpty ? 'National ID is required.' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -156,8 +156,8 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                     _dobController.text =
                         picked.toIso8601String().split('T').first;
                   }
-                                },
-                validator: (value) => value!.isEmpty ? 'Required' : null,
+                },
+                validator: (value) => value!.isEmpty ? 'Date of birth is required.' : null,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
@@ -175,8 +175,7 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                     _gender = newValue;
                   });
                 },
-                validator: (value) =>
-                    value == null ? 'Please select your gender' : null,
+                validator: (value) => value == null ? 'Gender is required.' : null,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
@@ -195,8 +194,7 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                     _maritalStatus = newValue;
                   });
                 },
-                validator: (value) =>
-                    value == null ? 'Please select your marital status' : null,
+                validator: (value) => value == null ? 'Marital status is required.' : null,
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -221,14 +219,14 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                             );
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Details Updated!')),
+                                const SnackBar(content: Text('Personal details updated successfully.')),
                               );
                               context.pop();
                             }
                           } catch (e) {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(e.toString())),
+                                SnackBar(content: Text('Error: ${e.toString()}')),
                               );
                             }
                           } finally {
@@ -299,14 +297,14 @@ class _ResidentialDetailsFormState extends State<ResidentialDetailsForm> {
                 controller: _countyController,
                 decoration: const InputDecoration(
                     labelText: 'County', border: OutlineInputBorder()),
-                validator: (value) => value!.isEmpty ? 'Required' : null,
+                validator: (value) => value!.isEmpty ? 'County is required.' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _cityController,
                 decoration: const InputDecoration(
                     labelText: 'City/Town', border: OutlineInputBorder()),
-                validator: (value) => value!.isEmpty ? 'Required' : null,
+                validator: (value) => value!.isEmpty ? 'City or town is required.' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -314,7 +312,7 @@ class _ResidentialDetailsFormState extends State<ResidentialDetailsForm> {
                 decoration: const InputDecoration(
                     labelText: 'Residential Address',
                     border: OutlineInputBorder()),
-                validator: (value) => value!.isEmpty ? 'Required' : null,
+                validator: (value) => value!.isEmpty ? 'Residential address is required.' : null,
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -336,14 +334,14 @@ class _ResidentialDetailsFormState extends State<ResidentialDetailsForm> {
                             );
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Details saved!')),
+                                const SnackBar(content: Text('Residential details updated successfully.')),
                               );
                               context.pop();
                             }
                           } catch (e) {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(e.toString())),
+                                SnackBar(content: Text('Error: ${e.toString()}')),
                               );
                             }
                           } finally {

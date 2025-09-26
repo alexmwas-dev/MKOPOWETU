@@ -24,7 +24,7 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
     _interstitialAdWidget.loadAd();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _interstitialAdWidget.showAd();
+      _interstitialAdWidget.showAdWithCallback(() {});
     });
   }
 
@@ -32,6 +32,7 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     _phoneController.dispose();
     _passwordController.dispose();
+    _interstitialAdWidget.dispose();
     super.dispose();
   }
 
@@ -56,7 +57,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Login to your account to continue',
+                  'Sign in to your account to continue.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey, fontSize: 16),
                 ),
@@ -71,7 +72,7 @@ class _LoginPageState extends State<LoginPage> {
                   keyboardType: TextInputType.phone,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your phone number.';
+                      return 'Phone number is required.';
                     }
                     return null;
                   },
@@ -87,7 +88,7 @@ class _LoginPageState extends State<LoginPage> {
                   obscureText: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password.';
+                      return 'Password is required.';
                     }
                     return null;
                   },
@@ -115,7 +116,7 @@ class _LoginPageState extends State<LoginPage> {
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                      content: Text('Login successful!')),
+                                      content: Text('Login Successful.')),
                                 );
                                 context.go('/home');
                               }
@@ -123,7 +124,7 @@ class _LoginPageState extends State<LoginPage> {
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                      content: Text('Login failed. Please check your credentials and try again.')),
+                                      content: Text('Login Failed. Please check your credentials and try again.')),
                                 );
                               }
                             } finally {
@@ -134,7 +135,7 @@ class _LoginPageState extends State<LoginPage> {
                           }
                         },
                         child:
-                            const Text('Login', style: TextStyle(fontSize: 18)),
+                            const Text('Sign In', style: TextStyle(fontSize: 18)),
                       ),
                 const SizedBox(height: 24),
                 Row(
@@ -144,7 +145,7 @@ class _LoginPageState extends State<LoginPage> {
                     TextButton(
                       onPressed: () => context.go('/register'),
                       child: Text(
-                        'Register',
+                        'Register Now',
                         style: TextStyle(
                             color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.bold),

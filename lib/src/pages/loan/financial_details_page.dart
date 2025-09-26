@@ -25,7 +25,7 @@ class _FinancialDetailsPageState extends State<FinancialDetailsPage> {
     super.initState();
     _interstitialAdWidget.loadAd();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _interstitialAdWidget.showAd();
+      _interstitialAdWidget.showAdWithCallback(() {});
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final user = authProvider.user;
       if (user != null) {
@@ -43,6 +43,7 @@ class _FinancialDetailsPageState extends State<FinancialDetailsPage> {
     _employmentStatusController.dispose();
     _monthlyIncomeController.dispose();
     _monthlyExpensesController.dispose();
+    _interstitialAdWidget.dispose();
     super.dispose();
   }
 

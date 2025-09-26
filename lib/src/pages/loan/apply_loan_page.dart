@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:mkopo_wetu/src/models/loan_model.dart';
 import 'package:mkopo_wetu/src/providers/auth_provider.dart';
 import 'package:mkopo_wetu/src/providers/loan_provider.dart';
 import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
@@ -19,24 +18,24 @@ class _ApplyLoanPageState extends State<ApplyLoanPage> {
   final _formKey = GlobalKey<FormState>();
   final ValueNotifier<double> _loanAmount = ValueNotifier<double>(5000.0);
   final ValueNotifier<int> _repaymentDays = ValueNotifier<int>(30);
-  bool _isLoading = false;
 
   bool _personalInfoCompleted = false;
   bool _residentialInfoCompleted = false;
 
   final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
+  Future<Map<String, dynamic>>? _eligibilityFuture;
 
   @override
   void initState() {
     super.initState();
     _interstitialAdWidget.loadAd();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _interstitialAdWidget.showAd();
       final user = Provider.of<AuthProvider>(context, listen: false).user;
       if (user != null) {
         setState(() {
           _personalInfoCompleted = user.isPersonalInfoComplete();
           _residentialInfoCompleted = user.isResidentialInfoComplete();
+          _eligibilityFuture = Provider.of<LoanProvider>(context, listen: false).isEligibleForLoan();
         });
       }
     });
@@ -46,15 +45,24 @@ class _ApplyLoanPageState extends State<ApplyLoanPage> {
   void dispose() {
     _loanAmount.dispose();
     _repaymentDays.dispose();
+    _interstitialAdWidget.dispose();
     super.dispose();
+  }
+
+  void _navigateToPayment() {
+    _interstitialAdWidget.showAdWithCallback(() {
+      context.push(
+        '/loan/payment',
+        extra: {
+          'loanAmount': _loanAmount.value,
+          'repaymentDays': _repaymentDays.value,
+        },
+      );
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final loanProvider = Provider.of<LoanProvider>(context);
-    final latestLoan = loanProvider.loans.isNotEmpty ? loanProvider.loans.first : null;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Apply for Loan'),
@@ -70,37 +78,42 @@ class _ApplyLoanPageState extends State<ApplyLoanPage> {
           },
         ),
       ),
-      body: _buildBody(context, authProvider, latestLoan),
+      body: _buildBody(context),
       bottomNavigationBar: const BannerAdWidget(),
     );
   }
 
-  Widget _buildBody(
-      BuildContext context, AuthProvider authProvider, Loan? latestLoan) {
-    if (latestLoan != null && latestLoan.status == 'rejected') {
-      final daysSinceRejection = DateTime.now().difference(latestLoan.date).inDays;
-      if (daysSinceRejection < 3) {
-        final daysRemaining = 3 - daysSinceRejection;
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline_rounded, color: Colors.red, size: 80),
-                const SizedBox(height: 20),
-                Text(
-                  'Your previous loan application was not successful. Please try again in $daysRemaining day(s).',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-        );
-      }
-    }
+  Widget _buildBody(BuildContext context) {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _eligibilityFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
+        if (snapshot.hasError) {
+          return _buildStatusIndicator(
+            icon: Icons.error,
+            color: Colors.red,
+            message: 'Error: ${snapshot.error}',
+          );
+        }
+
+        final eligibility = snapshot.data;
+        if (eligibility != null && !eligibility['eligible']) {
+          return _buildStatusIndicator(
+            icon: Icons.block,
+            color: Colors.red,
+            message: eligibility['message'],
+          );
+        }
+
+        return _buildApplicationForm();
+      },
+    );
+  }
+
+  Widget _buildApplicationForm() {
     final currencyFormatter =
         NumberFormat.currency(locale: 'en_KE', symbol: 'KSh ', decimalDigits: 0);
 
@@ -115,64 +128,56 @@ class _ApplyLoanPageState extends State<ApplyLoanPage> {
             const SizedBox(height: 24),
             _buildRepaymentPeriodCard(),
             const SizedBox(height: 24),
+            _buildInterestDetailsCard(currencyFormatter),
+            const SizedBox(height: 24),
             _buildInfoStatusTile('Personal Info', _personalInfoCompleted,
                 () => context.go('/profile/edit')),
             _buildInfoStatusTile('Residential Info', _residentialInfoCompleted,
                 () => context.go('/profile/edit')),
             const SizedBox(height: 32),
-            _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : ElevatedButton(
-                    onPressed: () async {
-                      if (!_personalInfoCompleted || !_residentialInfoCompleted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  'Please complete your personal and residential information before applying for a loan.')),
-                        );
-                        return;
-                      }
+            ElevatedButton(
+              onPressed: () {
+                if (!_personalInfoCompleted || !_residentialInfoCompleted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text(
+                            'Please complete your profile before applying.')),
+                  );
+                  return;
+                }
+                _navigateToPayment();
+              },
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Proceed to Payment',
+                  style: TextStyle(fontSize: 18)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-                      if (_formKey.currentState!.validate()) {
-                        setState(() => _isLoading = true);
-                        try {
-                          await Provider.of<LoanProvider>(context, listen: false)
-                              .applyForLoan(
-                                  authProvider.user!.uid, _loanAmount.value);
-
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text(
-                                      'Your loan application has been submitted successfully.')),
-                            );
-                            context.go('/home');
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content:
-                                      Text('There was an error submitting your loan application. Please try again.')),
-                            );
-                          }
-                        } finally {
-                          if (mounted) {
-                            setState(() => _isLoading = false);
-                          }
-                        }
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30)),
-                      backgroundColor: Theme.of(context).primaryColor,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('Confirm Application',
-                        style: TextStyle(fontSize: 18)),
-                  ),
+  Widget _buildStatusIndicator(
+      {required IconData icon, required Color color, required String message}) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 80),
+            const SizedBox(height: 20),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ),
@@ -261,9 +266,9 @@ class _ApplyLoanPageState extends State<ApplyLoanPage> {
               builder: (context, value, child) {
                 return Slider(
                   value: value.toDouble(),
-                  min: 30,
-                  max: 365,
-                  divisions: (365 - 30) ~/ 5,
+                  min: 18,
+                  max: 62,
+                  divisions: (62 - 18) ~/ 5,
                   label: '$value days',
                   onChanged: (newValue) {
                     _repaymentDays.value = newValue.round();
@@ -276,6 +281,62 @@ class _ApplyLoanPageState extends State<ApplyLoanPage> {
       ),
     );
   }
+
+  Widget _buildInterestDetailsCard(NumberFormat formatter) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Loan Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            ValueListenableBuilder<double>(
+              valueListenable: _loanAmount,
+              builder: (context, loanAmount, child) {
+                return ValueListenableBuilder<int>(
+                  valueListenable: _repaymentDays,
+                  builder: (context, repaymentDays, child) {
+                    final interest = loanAmount * 0.002 * repaymentDays;
+                    final totalRepayment = loanAmount + interest;
+                    return Column(
+                      children: [
+                        _buildDetailRow('Interest Rate:', '0.2% per day'),
+                        const SizedBox(height: 8),
+                        _buildDetailRow('Interest Amount:', formatter.format(interest)),
+                        const SizedBox(height: 8),
+                         const Divider(),
+                        const SizedBox(height: 8),
+                        _buildDetailRow('Total Repayment:', formatter.format(totalRepayment), isTotal: true),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildDetailRow(String label, String value, {bool isTotal = false}) {
+    final style = TextStyle(
+      fontSize: isTotal ? 20 : 16,
+      fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+      color: isTotal ? Theme.of(context).primaryColor : null,
+    );
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: style.copyWith(fontWeight: FontWeight.w500)),
+        Text(value, style: style),
+      ],
+    );
+}
+
 
   Widget _buildInfoStatusTile(
       String title, bool completed, VoidCallback onEdit) {

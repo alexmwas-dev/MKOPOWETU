@@ -16,7 +16,7 @@ class BottomNavBar extends StatelessWidget {
         children: <Widget>[
           _buildNavBarItem(context, Icons.home, 'Home', 0, '/home'),
           _buildNavBarItem(
-              context, Icons.history_edu_outlined, 'Loans', 1, '/loan-history'),
+              context, Icons.history_edu_outlined, 'Loans', 1, '/loan/history'),
           const SizedBox(width: 40), // The space for the FAB
           _buildNavBarItem(
               context, Icons.help_outline_rounded, 'Help', 2, '/faq'),

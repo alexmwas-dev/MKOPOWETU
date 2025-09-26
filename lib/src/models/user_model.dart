@@ -16,6 +16,7 @@ class User {
   final double? monthlyIncome;
   final double? monthlyExpenses;
   final bool isVerified;
+  final bool isConsentComplete;
 
   User({
     required this.uid,
@@ -35,6 +36,7 @@ class User {
     this.monthlyIncome,
     this.monthlyExpenses,
     this.isVerified = false,
+    this.isConsentComplete = false,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -56,6 +58,7 @@ class User {
       monthlyIncome: json['monthlyIncome']?.toDouble(),
       monthlyExpenses: json['monthlyExpenses']?.toDouble(),
       isVerified: json['isVerified'] ?? false,
+      isConsentComplete: json['isConsentComplete'] ?? false,
     );
   }
 
@@ -78,6 +81,7 @@ class User {
       'monthlyIncome': monthlyIncome,
       'monthlyExpenses': monthlyExpenses,
       'isVerified': isVerified,
+      'isConsentComplete': isConsentComplete,
     };
   }
 
@@ -99,6 +103,7 @@ class User {
     double? monthlyIncome,
     double? monthlyExpenses,
     bool? isVerified,
+    bool? isConsentComplete,
   }) {
     return User(
       uid: uid ?? this.uid,
@@ -118,6 +123,7 @@ class User {
       monthlyIncome: monthlyIncome ?? this.monthlyIncome,
       monthlyExpenses: monthlyExpenses ?? this.monthlyExpenses,
       isVerified: isVerified ?? this.isVerified,
+      isConsentComplete: isConsentComplete ?? this.isConsentComplete,
     );
   }
 

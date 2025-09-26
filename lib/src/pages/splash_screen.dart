@@ -19,15 +19,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
-    );
+    )..repeat(reverse: true);
     _animation = CurvedAnimation(
       parent: _animationController,
-      curve: Curves.easeIn,
+      curve: Curves.easeInOut,
     );
 
-    _animationController.forward();
-
-    Timer(const Duration(seconds: 2), () {
+    Timer(const Duration(seconds: 4), () {
       context.go('/intro');
     });
   }
@@ -45,10 +43,24 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       body: Center(
         child: FadeTransition(
           opacity: _animation,
-          child: Icon(
-            Icons.monetization_on,
-            size: 150,
-            color: Theme.of(context).primaryColor,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.monetization_on,
+                size: 150,
+                color: Theme.of(context).primaryColor,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Mkopo Wetu',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+            ],
           ),
         ),
       ),

@@ -3,13 +3,13 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:mkopo_wetu/src/models/loan_model.dart';
 import 'package:mkopo_wetu/src/providers/auth_provider.dart';
 import 'package:mkopo_wetu/src/providers/loan_provider.dart';
 import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
 import 'package:mkopo_wetu/src/widgets/bottom_nav_bar.dart';
 import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
 import 'package:mkopo_wetu/src/widgets/recipient_notification.dart';
+import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,6 +22,7 @@ class _HomePageState extends State<HomePage> {
   final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
   Timer? _notificationTimer;
   String? _notificationMessage;
+  Future<void>? _loadDataFuture;
 
   final _random = Random();
   final List<String> _phoneStarts = ['07', '01'];
@@ -32,14 +33,10 @@ class _HomePageState extends State<HomePage> {
     _interstitialAdWidget.loadAd();
     _startNotificationTimer();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _interstitialAdWidget.showAd();
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      if (authProvider.user != null) {
-        Provider.of<LoanProvider>(context, listen: false)
-            .fetchLoans(authProvider.user!.uid);
-      }
-    });
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.user != null) {
+      _loadDataFuture = Provider.of<LoanProvider>(context, listen: false).fetchLoans();
+    }
   }
 
   void _startNotificationTimer() {
@@ -55,7 +52,7 @@ class _HomePageState extends State<HomePage> {
     if (mounted) {
       setState(() {
         _notificationMessage =
-            '$phoneStart****${phoneEnd.toString().substring(4)} received KSh$amount';
+            '$phoneStart****${phoneEnd.toString().substring(4)} received KSh $amount';
       });
     }
     // Notification will disappear after a few seconds
@@ -69,14 +66,13 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     _notificationTimer?.cancel();
+    _interstitialAdWidget.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final loanProvider = Provider.of<LoanProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
-    final latestLoan = loanProvider.loans.isNotEmpty ? loanProvider.loans.first : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -94,42 +90,21 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Stack(
         children: [
-          RefreshIndicator(
-            onRefresh: () async {
-              if (authProvider.user != null) {
-                await Provider.of<LoanProvider>(context, listen: false)
-                    .fetchLoans(authProvider.user!.uid);
-              }
-            },
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0,
-                  150.0), // Padding for floating button and banner
-              children: [
-                _buildMainCard(context, latestLoan),
-                const SizedBox(height: 24),
-                _buildActionButtons(context, latestLoan),
-                const SizedBox(height: 24),
-                _buildInfoSubmissionRow(),
-                const SizedBox(height: 32),
-                _buildBorrowingGuide(context),
-                const SizedBox(height: 20),
-              ],
-            ),
+          ListView(
+            padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 150.0),
+            children: [
+              _buildLoanStatusCard(),
+              const SizedBox(height: 24),
+              _buildInfoSubmissionRow(),
+              const SizedBox(height: 32),
+              _buildBorrowingGuide(context),
+              const SizedBox(height: 20),
+            ],
           ),
           if (_notificationMessage != null)
             RecipientNotification(message: _notificationMessage!),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _interstitialAdWidget.showAd();
-          context.go('/apply-loan');
-        },
-        child: const Icon(Icons.add, color: Colors.white),
-        backgroundColor: Theme.of(context).primaryColor,
-        shape: const CircleBorder(),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: const Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -140,161 +115,177 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildMainCard(BuildContext context, Loan? loan) {
-    if (loan != null) {
-      if (loan.status == 'pending') {
-        // Auto-reject loan after 30 seconds
-        Future.delayed(const Duration(seconds: 30), () {
-          if (mounted && loan.status == 'pending') {
-            Provider.of<LoanProvider>(context, listen: false).updateLoanStatus(loan.id, 'rejected');
-          }
-        });
-      }
-      switch (loan.status) {
-        case 'pending':
-          return _buildMessageCard(
-            context,
-            title: 'Your loan application is being reviewed',
-            subtitle: 'Please be patient. This may take a few moments.',
-            icon: Icons.hourglass_top_rounded,
-            color: Colors.orange,
-          );
-        case 'rejected':
-          final daysSinceRejection =
-              DateTime.now().difference(loan.date).inDays;
-          if (daysSinceRejection < 3) {
-            final daysRemaining = 3 - daysSinceRejection;
-            return _buildMessageCard(
-              context,
-              title: 'Your loan application has been rejected',
-              subtitle:
-                  'You can apply for another loan in $daysRemaining day(s).',
-              icon: Icons.error_outline_rounded,
-              color: Colors.red,
-            );
-          }
-      }
-    }
-    return _buildLoanLimitCard();
-  }
+  Widget _buildLoanStatusCard() {
+    return Consumer<LoanProvider>(
+      builder: (context, loanProvider, child) {
+        return FutureBuilder(
+          future: _loadDataFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return _buildLoadingLoanCard();
+            }
 
-  Widget _buildLoanLimitCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            colors: [Theme.of(context).primaryColor, Colors.green.shade300],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Application Amount (KSh)',
-                style: TextStyle(color: Colors.white, fontSize: 16)),
-            const SizedBox(height: 8),
-            const Text('80,000',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                const Icon(Icons.timer_outlined, color: Colors.white, size: 16),
-                const SizedBox(width: 8),
-                const Text('Get loan within 3 minutes',
-                    style: TextStyle(color: Colors.white)),
-                const SizedBox(width: 16),
-                const Icon(Icons.calendar_today_outlined,
-                    color: Colors.white, size: 16),
-                const SizedBox(width: 8),
-                const Text('Maximum 365 days to repay',
-                    style: TextStyle(color: Colors.white)),
-              ],
-            )
-          ],
-        ),
-      ),
+            final latestLoan = loanProvider.loans.isNotEmpty ? loanProvider.loans.first : null;
+
+            return FutureBuilder<Map<String, dynamic>>(
+              future: loanProvider.isEligibleForLoan(),
+              builder: (context, eligibilitySnapshot) {
+                if (eligibilitySnapshot.connectionState == ConnectionState.waiting) {
+                  return _buildLoadingLoanCard();
+                }
+
+                bool isEligible = false;
+                String eligibilityMessage = '';
+
+                if (eligibilitySnapshot.hasData) {
+                  isEligible = eligibilitySnapshot.data!['eligible'];
+                  eligibilityMessage = eligibilitySnapshot.data!['message'] ?? '';
+                }
+
+                String title = 'Apply for a Loan';
+                String subtitle = 'You are eligible for a new loan.';
+                IconData icon = Icons.check_circle_outline_rounded;
+                Color cardColor = Theme.of(context).primaryColor;
+                String buttonText = 'Apply Now';
+                VoidCallback? onPressed = () => context.go('/loan/apply');
+
+                if (latestLoan != null) {
+                  switch (latestLoan.status) {
+                    case 'pending':
+                      title = 'Loan Pending';
+                      subtitle = 'Your application is under review.';
+                      icon = Icons.hourglass_empty_rounded;
+                      cardColor = Colors.orange;
+                      buttonText = 'View Details';
+                      onPressed = () => context.go('/loan/details', extra: latestLoan);
+                      break;
+                    case 'approved':
+                      title = 'Loan Approved';
+                      subtitle = 'Congratulations! Your loan of KSh ${NumberFormat('#,##0').format(latestLoan.amount)} is ready.';
+                      icon = Icons.check_circle_rounded;
+                      cardColor = Colors.green;
+                      buttonText = 'View Loan';
+                      onPressed = () => context.go('/loan/details', extra: latestLoan);
+                      break;
+                    case 'on-hold':
+                      title = 'Payment Required';
+                      subtitle = 'A payment is required to process your application.';
+                      icon = Icons.payment_rounded;
+                      cardColor = Colors.blue;
+                      buttonText = 'Make Payment';
+                      onPressed = () => context.push('/loan/payment', extra: {'loan': latestLoan});
+                      break;
+                    case 'rejected':
+                      title = 'Loan Rejected';
+                      subtitle = eligibilityMessage;
+                      icon = Icons.cancel_rounded;
+                      cardColor = Colors.red;
+                      buttonText = 'Apply Again';
+                      onPressed = isEligible ? () => context.go('/loan/apply') : null;
+                      break;
+                    case 'paid':
+                      title = 'All Loans Paid';
+                      subtitle = 'You have no outstanding loans.';
+                      icon = Icons.verified_user_rounded;
+                      cardColor = Theme.of(context).primaryColor;
+                      break;
+                  }
+                }
+
+                return Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  color: cardColor,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Icon(icon, size: 40, color: Colors.white),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                                  const SizedBox(height: 4),
+                                  Text(subtitle, style: TextStyle(color: Colors.white70)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: onPressed,
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 50),
+                            backgroundColor: Colors.white,
+                            foregroundColor: cardColor,
+                          ),
+                          child: Text(buttonText),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 
-  Widget _buildMessageCard(BuildContext context,
-      {required String title,
-      required String subtitle,
-      required IconData icon,
-      required Color color}) {
+
+  Widget _buildLoadingLoanCard() {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: color.withAlpha(25),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Icon(icon, size: 48, color: color),
-            const SizedBox(height: 16),
-            Text(title,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center),
-            const SizedBox(height: 8),
-            Text(subtitle,
-                style: TextStyle(color: Colors.grey[600]),
-                textAlign: TextAlign.center),
+            Row(
+              children: [
+                const CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.grey,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 150,
+                        height: 20,
+                        color: Colors.grey[300],
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        width: 200,
+                        height: 16,
+                        color: Colors.grey[300],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              height: 50,
+              color: Colors.grey[300],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, Loan? loan) {
-    bool canApply = loan == null ||
-        loan.status == 'paid' ||
-        (loan.status == 'rejected' &&
-            DateTime.now().difference(loan.date).inDays >= 3);
-
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.add_circle_outline, size: 20),
-            onPressed: canApply ? () {
-              _interstitialAdWidget.showAd();
-              context.go('/apply-loan');
-            } : null,
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30)),
-              backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
-            ),
-            label: const Text('Loan Now'),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.history_outlined, size: 20),
-            onPressed: () => context.go('/loan-history'),
-            style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30)),
-                side: BorderSide(
-                    color: Theme.of(context).colorScheme.primary, width: 1.5)),
-            label: const Text('History'),
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildInfoSubmissionRow() {
     return Row(
@@ -337,10 +328,10 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         _buildGuideItem(
-            'How it works?', Icons.help_outline, () => context.go('/faq')),
+            'How It Works', Icons.help_outline, () => context.go('/faq')),
         _buildGuideItem(
-            'How to repay?', Icons.payment, () => context.go('/faq')),
-        _buildGuideItem('Improve loan limit', Icons.arrow_upward, () {}),
+            'How to Repay', Icons.payment, () => context.go('/faq')),
+        _buildGuideItem('Improve Loan Limit', Icons.arrow_upward, () {}),
       ],
     );
   }
