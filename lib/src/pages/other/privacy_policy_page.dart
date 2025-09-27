@@ -17,9 +17,12 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
   void initState() {
     super.initState();
     _interstitialAdWidget.loadAd();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _interstitialAdWidget.showAdWithCallback(() {});
-    });
+  }
+
+  @override
+  void dispose() {
+    _interstitialAdWidget.dispose();
+    super.dispose();
   }
 
   @override
@@ -31,11 +34,13 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/profile');
-            }
+            _interstitialAdWidget.showAdWithCallback(() {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/profile');
+              }
+            });
           },
         ),
       ),

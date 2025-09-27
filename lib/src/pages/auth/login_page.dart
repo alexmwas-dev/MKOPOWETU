@@ -23,9 +23,6 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
     _interstitialAdWidget.loadAd();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _interstitialAdWidget.showAdWithCallback(() {});
-    });
   }
 
   @override
@@ -105,34 +102,36 @@ class _LoginPageState extends State<LoginPage> {
                           backgroundColor: Theme.of(context).primaryColor,
                           foregroundColor: Colors.white,
                         ),
-                        onPressed: () async {
+                        onPressed: () {
                           if (_formKey.currentState!.validate()) {
-                            setState(() => _isLoading = true);
-                            try {
-                              await authProvider.loginWithPhoneNumber(
-                                _phoneController.text,
-                                _passwordController.text,
-                              );
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text('Login Successful.')),
+                            _interstitialAdWidget.showAdWithCallback(() async {
+                              setState(() => _isLoading = true);
+                              try {
+                                await authProvider.loginWithPhoneNumber(
+                                  _phoneController.text,
+                                  _passwordController.text,
                                 );
-                                context.go('/home');
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text('Login Successful.')),
+                                  );
+                                  context.go('/home');
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'Login Failed. Please check your credentials and try again.')),
+                                  );
+                                }
+                              } finally {
+                                if (mounted) {
+                                  setState(() => _isLoading = false);
+                                }
                               }
-                            } catch (e) {
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'Login Failed. Please check your credentials and try again.')),
-                                );
-                              }
-                            } finally {
-                              if (mounted) {
-                                setState(() => _isLoading = false);
-                              }
-                            }
+                            });
                           }
                         },
                         child: const Text('Sign In',

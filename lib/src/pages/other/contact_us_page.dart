@@ -17,9 +17,6 @@ class _ContactUsPageState extends State<ContactUsPage> {
   void initState() {
     super.initState();
     _interstitialAdWidget.loadAd();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _interstitialAdWidget.showAdWithCallback(() {});
-    });
   }
 
   @override
@@ -37,11 +34,13 @@ class _ContactUsPageState extends State<ContactUsPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/profile');
-            }
+            _interstitialAdWidget.showAdWithCallback(() {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/profile');
+              }
+            });
           },
         ),
       ),

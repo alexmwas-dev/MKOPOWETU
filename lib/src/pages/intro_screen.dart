@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
+import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -13,10 +14,19 @@ class IntroScreen extends StatefulWidget {
 }
 
 class _IntroScreenState extends State<IntroScreen> {
+  final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
+
   @override
   void initState() {
     super.initState();
+    _interstitialAdWidget.loadAd();
     _requestPermissions();
+  }
+
+  @override
+  void dispose() {
+    _interstitialAdWidget.dispose();
+    super.dispose();
   }
 
   Future<void> _requestPermissions() async {
@@ -62,9 +72,13 @@ class _IntroScreenState extends State<IntroScreen> {
   }
 
   Future<void> _onDone() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('intro_seen', true);
-    context.go('/login');
+    _interstitialAdWidget.showAdWithCallback(() async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('intro_seen', true);
+      if (mounted) {
+        context.go('/login');
+      }
+    });
   }
 
   @override

@@ -11,6 +11,7 @@ import 'package:mkopo_wetu/src/providers/theme_provider.dart';
 import 'package:mkopo_wetu/src/providers/user_provider.dart';
 import 'package:mkopo_wetu/src/router/app_router.dart';
 import 'package:mkopo_wetu/src/services/user_service.dart';
+import 'package:mkopo_wetu/src/widgets/no_internet_widget.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -98,15 +99,25 @@ class MyApp extends StatelessWidget {
 
     final ThemeData darkTheme = lightTheme;
 
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        return MaterialApp.router(
-          routerConfig: appRouter.router,
-          title: 'Mkopo Wetu',
-          theme: lightTheme,
-          darkTheme: darkTheme,
-          themeMode: themeProvider.themeMode,
-        );
+    return Consumer<ConnectivityProvider>(
+      builder: (context, connectivityProvider, child) {
+        if (connectivityProvider.hasInternet) {
+          return Consumer<ThemeProvider>(
+            builder: (context, themeProvider, child) {
+              return MaterialApp.router(
+                routerConfig: appRouter.router,
+                title: 'Mkopo Wetu',
+                theme: lightTheme,
+                darkTheme: darkTheme,
+                themeMode: themeProvider.themeMode,
+              );
+            },
+          );
+        } else {
+          return const MaterialApp(
+            home: NoInternetWidget(),
+          );
+        }
       },
     );
   }

@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:mkopo_wetu/src/providers/auth_provider.dart';
 import 'package:mkopo_wetu/src/providers/loan_provider.dart';
 import 'package:mkopo_wetu/src/providers/payment_provider.dart';
+import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
 import 'package:mkopo_wetu/src/widgets/bottom_nav_bar.dart';
+import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
 import 'package:mkopo_wetu/src/widgets/loan_list_item.dart';
 import 'package:mkopo_wetu/src/widgets/payment_list_item.dart';
 
@@ -19,12 +21,17 @@ class LoanHistoryPage extends StatefulWidget {
 class _LoanHistoryPageState extends State<LoanHistoryPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(
         length: 2, vsync: this, initialIndex: widget.initialTabIndex);
+    _interstitialAdWidget.loadAd();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _interstitialAdWidget.showAdWithCallback(() {});
+    });
     // Fetching data is moved to didChangeDependencies to ensure context is available
   }
 
@@ -44,6 +51,7 @@ class _LoanHistoryPageState extends State<LoanHistoryPage>
   @override
   void dispose() {
     _tabController.dispose();
+    _interstitialAdWidget.dispose();
     super.dispose();
   }
 
@@ -84,7 +92,13 @@ class _LoanHistoryPageState extends State<LoanHistoryPage>
         shape: const CircleBorder(),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: const BottomNavBar(currentIndex: 1),
+      bottomNavigationBar: const Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          BannerAdWidget(),
+          BottomNavBar(currentIndex: 1),
+        ],
+      ),
     );
   }
 

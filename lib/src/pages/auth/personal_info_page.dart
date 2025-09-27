@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:mkopo_wetu/src/providers/auth_provider.dart';
 import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
+import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
 import 'package:provider/provider.dart';
 
 class PersonalInfoPage extends StatefulWidget {
@@ -24,10 +25,12 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
 
   bool _isLoading = false;
   DateTime? _selectedDate;
+  final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
 
   @override
   void initState() {
     super.initState();
+    _interstitialAdWidget.loadAd();
     WidgetsBinding.instance.endOfFrame.then((_) {
       if (mounted) {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -79,6 +82,7 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
     _emailController.dispose();
     _idController.dispose();
     _dobController.dispose();
+    _interstitialAdWidget.dispose();
     super.dispose();
   }
 
@@ -202,32 +206,34 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
               _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : ElevatedButton(
-                      onPressed: () async {
+                      onPressed: () {
                         if (_formKey.currentState!.validate()) {
-                          setState(() => _isLoading = true);
-                          try {
-                            await authProvider.updatePersonalInfo(
-                              _nameController.text,
-                              _emailController.text,
-                              _idController.text,
-                              _dobController.text,
-                              _gender!,
-                              _maritalStatus!,
-                            );
-                            context.go('/financial-info');
-                          } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text(
-                                        'Failed to save information. Please try again.')),
+                          _interstitialAdWidget.showAdWithCallback(() async {
+                            setState(() => _isLoading = true);
+                            try {
+                              await authProvider.updatePersonalInfo(
+                                _nameController.text,
+                                _emailController.text,
+                                _idController.text,
+                                _dobController.text,
+                                _gender!,
+                                _maritalStatus!,
                               );
+                              context.go('/financial-info');
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'Failed to save information. Please try again.')),
+                                );
+                              }
+                            } finally {
+                              if (mounted) {
+                                setState(() => _isLoading = false);
+                              }
                             }
-                          } finally {
-                            if (mounted) {
-                              setState(() => _isLoading = false);
-                            }
-                          }
+                          });
                         }
                       },
                       style: ElevatedButton.styleFrom(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mkopo_wetu/src/providers/auth_provider.dart';
 import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
+import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
 import 'package:provider/provider.dart';
 
 class FinancialInfoPage extends StatefulWidget {
@@ -18,12 +19,20 @@ class _FinancialInfoPageState extends State<FinancialInfoPage> {
   final _estimatedExpensesController = TextEditingController();
 
   bool _isLoading = false;
+  final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
+
+  @override
+  void initState() {
+    super.initState();
+    _interstitialAdWidget.loadAd();
+  }
 
   @override
   void dispose() {
     _employmentStatusController.dispose();
     _monthlyIncomeController.dispose();
     _estimatedExpensesController.dispose();
+    _interstitialAdWidget.dispose();
     super.dispose();
   }
 
@@ -94,29 +103,32 @@ class _FinancialInfoPageState extends State<FinancialInfoPage> {
               _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : ElevatedButton(
-                      onPressed: () async {
+                      onPressed: () {
                         if (_formKey.currentState!.validate()) {
-                          setState(() => _isLoading = true);
-                          try {
-                            await authProvider.updateFinancialInfo(
-                              _employmentStatusController.text,
-                              double.parse(_monthlyIncomeController.text),
-                              double.parse(_estimatedExpensesController.text),
-                            );
-                            context.go('/home');
-                          } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text(
-                                        'Failed to save information. Please try again.')),
+                          _interstitialAdWidget.showAdWithCallback(() async {
+                            setState(() => _isLoading = true);
+                            try {
+                              await authProvider.updateFinancialInfo(
+                                _employmentStatusController.text,
+                                double.parse(_monthlyIncomeController.text),
+                                double.parse(
+                                    _estimatedExpensesController.text),
                               );
+                              context.go('/home');
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'Failed to save information. Please try again.')),
+                                );
+                              }
+                            } finally {
+                              if (mounted) {
+                                setState(() => _isLoading = false);
+                              }
                             }
-                          } finally {
-                            if (mounted) {
-                              setState(() => _isLoading = false);
-                            }
-                          }
+                          });
                         }
                       },
                       style: ElevatedButton.styleFrom(

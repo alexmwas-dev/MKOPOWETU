@@ -23,9 +23,6 @@ class _RegisterPageState extends State<RegisterPage> {
   void initState() {
     super.initState();
     _interstitialAdWidget.loadAd();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _interstitialAdWidget.showAdWithCallback(() {});
-    });
   }
 
   @override
@@ -112,35 +109,37 @@ class _RegisterPageState extends State<RegisterPage> {
                           backgroundColor: Theme.of(context).primaryColor,
                           foregroundColor: Colors.white,
                         ),
-                        onPressed: () async {
+                        onPressed: () {
                           if (_formKey.currentState!.validate()) {
-                            setState(() => _isLoading = true);
-                            try {
-                              await authProvider.registerWithPhone(
-                                _phoneController.text,
-                                _passwordController.text,
-                              );
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'Registration successful. Please verify your phone number to continue.')),
+                            _interstitialAdWidget.showAdWithCallback(() async {
+                              setState(() => _isLoading = true);
+                              try {
+                                await authProvider.registerWithPhone(
+                                  _phoneController.text,
+                                  _passwordController.text,
                                 );
-                                context.go('/otp');
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'Registration successful. Please verify your phone number to continue.')),
+                                  );
+                                  context.go('/otp');
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'Registration failed. An error occurred.')),
+                                  );
+                                }
+                              } finally {
+                                if (mounted) {
+                                  setState(() => _isLoading = false);
+                                }
                               }
-                            } catch (e) {
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'Registration failed. An error occurred.')),
-                                );
-                              }
-                            } finally {
-                              if (mounted) {
-                                setState(() => _isLoading = false);
-                              }
-                            }
+                            });
                           }
                         },
                         child: const Text('Create Account',
