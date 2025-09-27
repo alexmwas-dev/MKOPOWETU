@@ -6,6 +6,7 @@ import 'package:mkopo_wetu/src/providers/loan_provider.dart';
 import 'package:mkopo_wetu/src/services/config_service.dart';
 import 'package:mkopo_wetu/src/services/mpesa_service.dart';
 import 'package:mkopo_wetu/src/services/payment_service.dart';
+import 'dart:developer' as developer;
 
 enum PaymentStatus { idle, loading, success, failed, cancelled, timeout }
 
@@ -21,13 +22,25 @@ class PaymentProvider with ChangeNotifier {
 
   Future<void> _initializeMpesaService() async {
     if (_mpesaService == null) {
-      final mpesaConfig = await _configService.getMpesaConfig();
-      _mpesaService = MpesaService(
-        consumerKey: mpesaConfig['consumerKey'],
-        consumerSecret: mpesaConfig['consumerSecret'],
-        passkey: mpesaConfig['passkey'],
-        shortcode: mpesaConfig['shortcode'],
-      );
+      try {
+        final mpesaConfig = await _configService.getMpesaConfig();
+        _mpesaService = MpesaService(
+          consumerKey: mpesaConfig['consumerKey'],
+          consumerSecret: mpesaConfig['consumerSecret'],
+          passkey: mpesaConfig['passkey'],
+          shortcode: mpesaConfig['shortcode'],
+        );
+      } catch (e, s) {
+        developer.log(
+          'Failed to initialize MpesaService',
+          name: 'PaymentProvider',
+          error: e,
+          stackTrace: s,
+        );
+        _status = PaymentStatus.failed;
+        notifyListeners();
+        rethrow; // Rethrow to prevent further execution
+      }
     }
   }
 
@@ -60,6 +73,14 @@ class PaymentProvider with ChangeNotifier {
     try {
       await _initializeMpesaService();
 
+      if (_mpesaService == null) {
+        throw Exception('MpesaService is not initialized');
+      }
+
+      if (loan == null && (loanAmount == null || repaymentDays == null)) {
+        throw Exception('loanAmount and repaymentDays must be provided for new loans');
+      }
+
       final checkoutRequestId = await _mpesaService!.initiateStkPush(
         amount: amount,
         phoneNumber: phoneNumber,
@@ -83,7 +104,13 @@ class PaymentProvider with ChangeNotifier {
       }
 
       await _pollPaymentStatus(checkoutRequestId);
-    } catch (e) {
+    } catch (e, s) {
+      developer.log(
+        'Error initiating payment',
+        name: 'PaymentProvider',
+        error: e,
+        stackTrace: s,
+      );
       _status = PaymentStatus.failed;
     }
 
@@ -109,7 +136,13 @@ class PaymentProvider with ChangeNotifier {
           timer.cancel();
           completer.complete();
         }
-      } catch (e) {
+      } catch (e, s) {
+        developer.log(
+          'Error polling payment status',
+          name: 'PaymentProvider',
+          error: e,
+          stackTrace: s,
+        );
         _status = PaymentStatus.failed;
         timer.cancel();
         completer.complete();

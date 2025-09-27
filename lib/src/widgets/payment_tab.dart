@@ -38,7 +38,12 @@ class _PaymentTabState extends State<PaymentTab> {
     final paymentProvider = context.read<PaymentProvider>();
     final authProvider = context.read<AuthProvider>();
     final loanProvider = context.read<LoanProvider>();
-    final user = authProvider.user!;
+    final user = authProvider.user;
+
+    if (user == null) {
+      // Handle user not logged in case
+      return;
+    }
 
     final phone = widget.useCurrentUserPhone ? user.phoneNumber : _phoneController.text;
 

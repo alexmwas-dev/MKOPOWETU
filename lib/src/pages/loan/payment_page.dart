@@ -6,6 +6,7 @@ import 'package:mkopo_wetu/src/services/config_service.dart';
 import 'package:mkopo_wetu/src/widgets/payment_success_screen.dart';
 import 'package:mkopo_wetu/src/widgets/payment_tab.dart';
 import 'package:provider/provider.dart';
+import 'dart:developer' as developer;
 
 class PaymentPage extends StatefulWidget {
   final Loan? loan;
@@ -21,26 +22,29 @@ class PaymentPage extends StatefulWidget {
 class _PaymentPageState extends State<PaymentPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final ConfigService _configService = ConfigService();
-  double? _loanFee;
+  Future<double>? _loanFeeFuture;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _fetchLoanFee();
+    _loanFeeFuture = _fetchLoanFee();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PaymentProvider>(context, listen: false).resetStatus();
     });
   }
 
-  Future<void> _fetchLoanFee() async {
+  Future<double> _fetchLoanFee() async {
     try {
-      final fee = await _configService.getLoanFee();
-      setState(() {
-        _loanFee = fee;
-      });
-    } catch (e) {
-      // Handle error
+      return await _configService.getLoanFee();
+    } catch (e, s) {
+      developer.log(
+        'Failed to fetch or parse loan fee. Using default value.',
+        name: 'PaymentPage',
+        error: e,
+        stackTrace: s,
+      );
+      return 210.0; // Return a default value
     }
   }
 
@@ -72,27 +76,42 @@ class _PaymentPageState extends State<PaymentPage> with SingleTickerProviderStat
           ],
         ),
       ),
-      body: _loanFee == null
-          ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
+      body: FutureBuilder<double>(
+        future: _loanFeeFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            // This part might not be reached if you always return a default value,
+            // but it's good practice for robustness.
+            return const Center(child: Text('Error loading loan fee.'));
+          } else if (snapshot.hasData) {
+            final loanFee = snapshot.data!;
+            return TabBarView(
               controller: _tabController,
               children: [
                 PaymentTab(
                   loan: widget.loan,
                   loanAmount: widget.loanAmount,
                   repaymentDays: widget.repaymentDays,
-                  loanFee: _loanFee!,
+                  loanFee: loanFee,
                   useCurrentUserPhone: true,
                 ),
                 PaymentTab(
                   loan: widget.loan,
                   loanAmount: widget.loanAmount,
                   repaymentDays: widget.repaymentDays,
-                  loanFee: _loanFee!,
+                  loanFee: loanFee,
                   useCurrentUserPhone: false,
                 ),
               ],
-            ),
+            );
+          } else {
+            // This case should ideally not be reached with the current logic
+            return const Center(child: Text('An unexpected error occurred.'));
+          }
+        },
+      ),
     );
   }
 }

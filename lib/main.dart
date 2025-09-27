@@ -6,8 +6,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:mkopo_wetu/src/providers/auth_provider.dart';
 import 'package:mkopo_wetu/src/providers/connectivity_provider.dart';
 import 'package:mkopo_wetu/src/providers/loan_provider.dart';
+import 'package:mkopo_wetu/src/providers/payment_provider.dart';
 import 'package:mkopo_wetu/src/providers/theme_provider.dart';
+import 'package:mkopo_wetu/src/providers/user_provider.dart';
 import 'package:mkopo_wetu/src/router/app_router.dart';
+import 'package:mkopo_wetu/src/services/user_service.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -23,6 +26,10 @@ void main() async {
         ChangeNotifierProvider(create: (context) => AuthProvider()),
         ChangeNotifierProvider(create: (context) => ConnectivityProvider()),
         ChangeNotifierProvider(create: (context) => LoanProvider()),
+        ChangeNotifierProvider(create: (context) => PaymentProvider()),
+        ChangeNotifierProvider(
+          create: (context) => UserProvider(UserService()),
+        ),
       ],
       child: const MyApp(),
     ),
