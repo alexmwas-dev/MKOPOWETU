@@ -123,7 +123,8 @@ class _LoanDetailsPageState extends State<LoanDetailsPage> {
   }
 
   Widget _buildDetailsCard(BuildContext context, double totalRepayable) {
-    final repaymentPeriod = widget.loan.repaymentDate.difference(widget.loan.date).inDays;
+    final repaymentPeriod =
+        widget.loan.repaymentDate.difference(widget.loan.date).inDays;
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -139,15 +140,16 @@ class _LoanDetailsPageState extends State<LoanDetailsPage> {
                 icon: Icons.confirmation_number_outlined),
             _buildDetailRow('Term', '$repaymentPeriod days',
                 icon: Icons.date_range_outlined),
-            _buildDetailRow(
-                'Application Date', DateFormat('MMM dd, yyyy').format(widget.loan.date),
+            _buildDetailRow('Application Date',
+                DateFormat('MMM dd, yyyy').format(widget.loan.date),
                 icon: Icons.calendar_today_outlined),
             _buildDetailRow('Due Date',
                 DateFormat('MMM dd, yyyy').format(widget.loan.repaymentDate),
                 icon: Icons.event_available_outlined),
             const Divider(height: 24),
             _buildDetailRow(
-                'Interest (${(widget.loan.interestRate * 100).toStringAsFixed(1)}% daily)', 'KSh ${widget.loan.interestAmount.toStringAsFixed(2)}',
+                'Interest (${(widget.loan.interestRate * 100).toStringAsFixed(1)}% daily)',
+                'KSh ${widget.loan.interestAmount.toStringAsFixed(2)}',
                 icon: Icons.trending_up_outlined),
             _buildDetailRow(
                 'Total Repayment', 'KSh ${totalRepayable.toStringAsFixed(2)}',

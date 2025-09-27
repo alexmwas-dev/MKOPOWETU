@@ -13,13 +13,15 @@ class PaymentPage extends StatefulWidget {
   final double? loanAmount;
   final int? repaymentDays;
 
-  const PaymentPage({super.key, this.loan, this.loanAmount, this.repaymentDays});
+  const PaymentPage(
+      {super.key, this.loan, this.loanAmount, this.repaymentDays});
 
   @override
   State<PaymentPage> createState() => _PaymentPageState();
 }
 
-class _PaymentPageState extends State<PaymentPage> with SingleTickerProviderStateMixin {
+class _PaymentPageState extends State<PaymentPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final ConfigService _configService = ConfigService();
   Future<double>? _loanFeeFuture;
@@ -63,7 +65,8 @@ class _PaymentPageState extends State<PaymentPage> with SingleTickerProviderStat
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: paymentProvider.status == PaymentStatus.loading
               ? null
-              : () => context.go('/loan/history', extra: {'initialTabIndex': 1}),
+              : () =>
+                  context.go('/loan/history', extra: {'initialTabIndex': 1}),
         ),
         title: const Text('Make Payment'),
         backgroundColor: Colors.transparent,

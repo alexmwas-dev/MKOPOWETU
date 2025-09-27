@@ -59,18 +59,22 @@ class _OtpPageState extends State<OtpPage> with CodeAutoFill {
         final isVerified = await authProvider.verifyOtp(pin);
         if (isVerified && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Phone number successfully verified.')),
+            const SnackBar(
+                content: Text('Phone number successfully verified.')),
           );
           context.go('/consent');
         } else if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid verification code. Please try again.')),
+            const SnackBar(
+                content: Text('Invalid verification code. Please try again.')),
           );
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('An error occurred during verification. Please try again.')),
+            const SnackBar(
+                content: Text(
+                    'An error occurred during verification. Please try again.')),
           );
         }
       } finally {
@@ -174,7 +178,8 @@ class _OtpPageState extends State<OtpPage> with CodeAutoFill {
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                        content: Text('A new verification code has been sent.')),
+                                        content: Text(
+                                            'A new verification code has been sent.')),
                                   );
                                 }
                               } catch (e) {

@@ -50,10 +50,13 @@ class MyApp extends StatelessWidget {
     const Color textColor = Color(0xFF2C2C2C);
 
     final TextTheme appTextTheme = TextTheme(
-      displayLarge: GoogleFonts.oswald(fontSize: 57, fontWeight: FontWeight.bold, color: textColor),
-      titleLarge: GoogleFonts.roboto(fontSize: 22, fontWeight: FontWeight.w500, color: textColor),
+      displayLarge: GoogleFonts.oswald(
+          fontSize: 57, fontWeight: FontWeight.bold, color: textColor),
+      titleLarge: GoogleFonts.roboto(
+          fontSize: 22, fontWeight: FontWeight.w500, color: textColor),
       bodyMedium: GoogleFonts.openSans(fontSize: 14, color: textColor),
-      labelLarge: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white),
+      labelLarge: GoogleFonts.roboto(
+          fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white),
     );
 
     final ThemeData lightTheme = ThemeData(
@@ -72,7 +75,8 @@ class MyApp extends StatelessWidget {
         backgroundColor: lightGreenBackground,
         foregroundColor: textColor,
         elevation: 0,
-        titleTextStyle: GoogleFonts.oswald(fontSize: 24, fontWeight: FontWeight.bold, color: textColor),
+        titleTextStyle: GoogleFonts.oswald(
+            fontSize: 24, fontWeight: FontWeight.bold, color: textColor),
       ),
       cardTheme: const CardThemeData(
         elevation: 1,
@@ -86,7 +90,8 @@ class MyApp extends StatelessWidget {
           backgroundColor: primaryColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          textStyle: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w500),
+          textStyle:
+              GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w500),
         ),
       ),
     );

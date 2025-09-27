@@ -39,10 +39,12 @@ class PaymentSuccessScreen extends StatelessWidget {
               ),
               const SizedBox(height: 48),
               ElevatedButton(
-                onPressed: () => context.go('/loan/history', extra: {'initialTabIndex': 0}),
+                onPressed: () =>
+                    context.go('/loan/history', extra: {'initialTabIndex': 0}),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green[700],
-                  padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30.0),
                   ),

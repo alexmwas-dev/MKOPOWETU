@@ -35,7 +35,8 @@ class _ApplyLoanPageState extends State<ApplyLoanPage> {
         setState(() {
           _personalInfoCompleted = user.isPersonalInfoComplete();
           _residentialInfoCompleted = user.isResidentialInfoComplete();
-          _eligibilityFuture = Provider.of<LoanProvider>(context, listen: false).isEligibleForLoan();
+          _eligibilityFuture = Provider.of<LoanProvider>(context, listen: false)
+              .isEligibleForLoan();
         });
       }
     });
@@ -114,8 +115,8 @@ class _ApplyLoanPageState extends State<ApplyLoanPage> {
   }
 
   Widget _buildApplicationForm() {
-    final currencyFormatter =
-        NumberFormat.currency(locale: 'en_KE', symbol: 'KSh ', decimalDigits: 0);
+    final currencyFormatter = NumberFormat.currency(
+        locale: 'en_KE', symbol: 'KSh ', decimalDigits: 0);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 150),
@@ -291,7 +292,8 @@ class _ApplyLoanPageState extends State<ApplyLoanPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Loan Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Loan Details',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             ValueListenableBuilder<double>(
               valueListenable: _loanAmount,
@@ -305,11 +307,14 @@ class _ApplyLoanPageState extends State<ApplyLoanPage> {
                       children: [
                         _buildDetailRow('Interest Rate:', '0.2% per day'),
                         const SizedBox(height: 8),
-                        _buildDetailRow('Interest Amount:', formatter.format(interest)),
+                        _buildDetailRow(
+                            'Interest Amount:', formatter.format(interest)),
                         const SizedBox(height: 8),
-                         const Divider(),
+                        const Divider(),
                         const SizedBox(height: 8),
-                        _buildDetailRow('Total Repayment:', formatter.format(totalRepayment), isTotal: true),
+                        _buildDetailRow('Total Repayment:',
+                            formatter.format(totalRepayment),
+                            isTotal: true),
                       ],
                     );
                   },
@@ -321,7 +326,7 @@ class _ApplyLoanPageState extends State<ApplyLoanPage> {
       ),
     );
   }
-  
+
   Widget _buildDetailRow(String label, String value, {bool isTotal = false}) {
     final style = TextStyle(
       fontSize: isTotal ? 20 : 16,
@@ -335,8 +340,7 @@ class _ApplyLoanPageState extends State<ApplyLoanPage> {
         Text(value, style: style),
       ],
     );
-}
-
+  }
 
   Widget _buildInfoStatusTile(
       String title, bool completed, VoidCallback onEdit) {

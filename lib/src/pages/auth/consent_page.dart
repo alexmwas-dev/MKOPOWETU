@@ -199,8 +199,8 @@ If you have any questions or concerns about our Privacy Policy or data practices
                             color: Theme.of(context).primaryColor,
                             decoration: TextDecoration.underline),
                         recognizer: TapGestureRecognizer()
-                          ..onTap = () =>
-                              _showInfoDialog('Privacy Policy', _privacyPolicyText),
+                          ..onTap = () => _showInfoDialog(
+                              'Privacy Policy', _privacyPolicyText),
                       ),
                     ],
                   ),

@@ -68,5 +68,4 @@ class DefaultFirebaseOptions {
     databaseURL: 'https://mkopo-wetu-default-rtdb.firebaseio.com',
     storageBucket: 'mkopo-wetu.firebasestorage.app',
   );
-
 }

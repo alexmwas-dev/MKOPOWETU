@@ -177,54 +177,53 @@ class AppRouter {
                 },
               ),
             ]),
-        GoRoute(
-            path: '/loan',
-            routes: [
-              GoRoute(
-                path: 'apply',
-                builder: (BuildContext context, GoRouterState state) {
-                  return const ApplyLoanPage();
-                },
-              ),
-              GoRoute(
-                path: 'history',
-                builder: (BuildContext context, GoRouterState state) {
-                  final Map<String, dynamic>? args = state.extra as Map<String, dynamic>?;
+        GoRoute(path: '/loan', routes: [
+          GoRoute(
+            path: 'apply',
+            builder: (BuildContext context, GoRouterState state) {
+              return const ApplyLoanPage();
+            },
+          ),
+          GoRoute(
+            path: 'history',
+            builder: (BuildContext context, GoRouterState state) {
+              final Map<String, dynamic>? args =
+                  state.extra as Map<String, dynamic>?;
 
-                  return LoanHistoryPage(
-                    initialTabIndex: args?['initialTabIndex'] ?? 0,
-                  );
-                },
-              ),
-              GoRoute(
-                path: 'details',
-                builder: (BuildContext context, GoRouterState state) {
-                  final loan = state.extra as Loan;
-                  return LoanDetailsPage(loan: loan);
-                },
-              ),
-              GoRoute(
-                path: 'payment',
-                builder: (BuildContext context, GoRouterState state) {
-                  final args = state.extra as Map<String, dynamic>;
-                  final loan = args['loan'] as Loan?;
-                  final loanAmount = args['loanAmount'] as double?;
-                  final repaymentDays = args['repaymentDays'] as int?;
-                  return PaymentPage(
-                    loan: loan,
-                    loanAmount: loanAmount,
-                    repaymentDays: repaymentDays,
-                  );
-                },
-              ),
-              GoRoute(
-                path: 'payment-details',
-                builder: (BuildContext context, GoRouterState state) {
-                  final payment = state.extra as Payment;
-                  return PaymentDetailsPage(payment: payment);
-                },
-              ),
-            ]),
+              return LoanHistoryPage(
+                initialTabIndex: args?['initialTabIndex'] ?? 0,
+              );
+            },
+          ),
+          GoRoute(
+            path: 'details',
+            builder: (BuildContext context, GoRouterState state) {
+              final loan = state.extra as Loan;
+              return LoanDetailsPage(loan: loan);
+            },
+          ),
+          GoRoute(
+            path: 'payment',
+            builder: (BuildContext context, GoRouterState state) {
+              final args = state.extra as Map<String, dynamic>;
+              final loan = args['loan'] as Loan?;
+              final loanAmount = args['loanAmount'] as double?;
+              final repaymentDays = args['repaymentDays'] as int?;
+              return PaymentPage(
+                loan: loan,
+                loanAmount: loanAmount,
+                repaymentDays: repaymentDays,
+              );
+            },
+          ),
+          GoRoute(
+            path: 'payment-details',
+            builder: (BuildContext context, GoRouterState state) {
+              final payment = state.extra as Payment;
+              return PaymentDetailsPage(payment: payment);
+            },
+          ),
+        ]),
         GoRoute(
           path: '/personal-details',
           redirect: (_, __) => '/profile/edit',

@@ -10,7 +10,8 @@ class LoanListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(locale: 'en_KE', symbol: 'KES ');
+    final currencyFormat =
+        NumberFormat.currency(locale: 'en_KE', symbol: 'KES ');
     final dateFormat = DateFormat('MMM d, yyyy');
     final totalRepayment = loan.amount + loan.interestAmount;
 
@@ -65,9 +66,10 @@ class LoanListItem extends StatelessWidget {
               const SizedBox(height: 5),
               Text(
                 'Total Repayment: ${currencyFormat.format(totalRepayment)}',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold
-                ),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
               Row(
@@ -77,7 +79,8 @@ class LoanListItem extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: _getStatusColor(loan.status).withAlpha(51),
                       borderRadius: BorderRadius.circular(5),

@@ -123,7 +123,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                      content: Text('Registration successful. Please verify your phone number to continue.')),
+                                      content: Text(
+                                          'Registration successful. Please verify your phone number to continue.')),
                                 );
                                 context.go('/otp');
                               }
@@ -131,7 +132,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                      content: Text('Registration failed. An error occurred.')),
+                                      content: Text(
+                                          'Registration failed. An error occurred.')),
                                 );
                               }
                             } finally {

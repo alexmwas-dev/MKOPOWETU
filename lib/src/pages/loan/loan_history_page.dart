@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:mkopo_wetu/src/providers/auth_provider.dart';
 import 'package:mkopo_wetu/src/providers/loan_provider.dart';
+import 'package:mkopo_wetu/src/providers/payment_provider.dart';
 import 'package:mkopo_wetu/src/widgets/bottom_nav_bar.dart';
 import 'package:mkopo_wetu/src/widgets/loan_list_item.dart';
 import 'package:mkopo_wetu/src/widgets/payment_list_item.dart';
@@ -21,10 +23,22 @@ class _LoanHistoryPageState extends State<LoanHistoryPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this, initialIndex: widget.initialTabIndex);
-    final loanProvider = Provider.of<LoanProvider>(context, listen: false);
-    loanProvider.fetchLoans();
-    loanProvider.fetchPayments();
+    _tabController = TabController(
+        length: 2, vsync: this, initialIndex: widget.initialTabIndex);
+    // Fetching data is moved to didChangeDependencies to ensure context is available
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Fetch initial data when the widget is first built
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+    if (user != null) {
+      Provider.of<LoanProvider>(context, listen: false).fetchLoans();
+      Provider.of<PaymentProvider>(context, listen: false)
+          .fetchPayments(user.uid);
+    }
   }
 
   @override
@@ -77,6 +91,9 @@ class _LoanHistoryPageState extends State<LoanHistoryPage>
   Widget _buildLoanRecordView() {
     return Consumer<LoanProvider>(
       builder: (context, loanProvider, child) {
+        if (loanProvider.status == LoanStatus.loading) {
+          return const Center(child: CircularProgressIndicator());
+        }
         final loans = loanProvider.loans;
         if (loans.isEmpty) {
           return _buildEmptyState(
@@ -95,9 +112,12 @@ class _LoanHistoryPageState extends State<LoanHistoryPage>
   }
 
   Widget _buildPaymentRecordView() {
-    return Consumer<LoanProvider>(
-      builder: (context, loanProvider, child) {
-        final payments = loanProvider.payments;
+    return Consumer<PaymentProvider>(
+      builder: (context, paymentProvider, child) {
+        if (paymentProvider.status == PaymentStatus.loading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final payments = paymentProvider.payments;
 
         if (payments.isEmpty) {
           return _buildEmptyState(
@@ -123,7 +143,8 @@ class _LoanHistoryPageState extends State<LoanHistoryPage>
           Icon(Icons.receipt_long_outlined, size: 80, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Text(
             subtitle,

@@ -124,7 +124,8 @@ class _LoginPageState extends State<LoginPage> {
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                      content: Text('Login Failed. Please check your credentials and try again.')),
+                                      content: Text(
+                                          'Login Failed. Please check your credentials and try again.')),
                                 );
                               }
                             } finally {
@@ -134,8 +135,8 @@ class _LoginPageState extends State<LoginPage> {
                             }
                           }
                         },
-                        child:
-                            const Text('Sign In', style: TextStyle(fontSize: 18)),
+                        child: const Text('Sign In',
+                            style: TextStyle(fontSize: 18)),
                       ),
                 const SizedBox(height: 24),
                 Row(

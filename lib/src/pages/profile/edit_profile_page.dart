@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:mkopo_wetu/src/providers/auth_provider.dart';
 import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
@@ -16,14 +17,21 @@ class _EditProfilePageState extends State<EditProfilePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final InterstitialAdWidget _interstitialAdWidget = InterstitialAdWidget();
+  DateTime? _selectedDate;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _interstitialAdWidget.loadAd();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _interstitialAdWidget.showAdWithCallback(() {});
+    WidgetsBinding.instance.endOfFrame.then((_) {
+      if (mounted) {
+        _interstitialAdWidget.showAdWithCallback(() {});
+        final user = Provider.of<AuthProvider>(context, listen: false).user;
+        if (user?.dob != null) {
+          _selectedDate = DateTime.tryParse(user!.dob!);
+        }
+      }
     });
   }
 
@@ -58,9 +66,11 @@ class _EditProfilePageState extends State<EditProfilePage>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [
-          PersonalDetailsForm(),
-          ResidentialDetailsForm(),
+        children: [
+          PersonalDetailsForm(
+              selectedDate: _selectedDate,
+              onDateChanged: (date) => setState(() => _selectedDate = date)),
+          const ResidentialDetailsForm(),
         ],
       ),
       bottomNavigationBar: const BannerAdWidget(),
@@ -69,7 +79,10 @@ class _EditProfilePageState extends State<EditProfilePage>
 }
 
 class PersonalDetailsForm extends StatefulWidget {
-  const PersonalDetailsForm({super.key});
+  final DateTime? selectedDate;
+  final ValueChanged<DateTime?> onDateChanged;
+  const PersonalDetailsForm(
+      {super.key, required this.selectedDate, required this.onDateChanged});
 
   @override
   _PersonalDetailsFormState createState() => _PersonalDetailsFormState();
@@ -92,7 +105,11 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
     _nameController = TextEditingController(text: user?.name ?? '');
     _emailController = TextEditingController(text: user?.email ?? '');
     _idController = TextEditingController(text: user?.idNumber ?? '');
-    _dobController = TextEditingController(text: user?.dob ?? '');
+    _dobController = TextEditingController();
+    if (widget.selectedDate != null) {
+      _dobController.text =
+          DateFormat('yyyy-MM-dd').format(widget.selectedDate!);
+    }
     _gender = user?.gender;
     _maritalStatus = user?.maritalStatus;
   }
@@ -121,21 +138,25 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                 controller: _nameController,
                 decoration: const InputDecoration(
                     labelText: 'Full Name', border: OutlineInputBorder()),
-                validator: (value) => value!.isEmpty ? 'Full name is required.' : null,
+                validator: (value) =>
+                    value!.isEmpty ? 'Full name is required.' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(
                     labelText: 'Email Address', border: OutlineInputBorder()),
-                validator: (value) => value!.isEmpty ? 'Email address is required.' : null,
+                validator: (value) =>
+                    value!.isEmpty ? 'Email address is required.' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _idController,
                 decoration: const InputDecoration(
-                    labelText: 'National ID Number', border: OutlineInputBorder()),
-                validator: (value) => value!.isEmpty ? 'National ID is required.' : null,
+                    labelText: 'National ID Number',
+                    border: OutlineInputBorder()),
+                validator: (value) =>
+                    value!.isEmpty ? 'National ID is required.' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -148,16 +169,18 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                 onTap: () async {
                   DateTime? picked = await showDatePicker(
                     context: context,
-                    initialDate: DateTime.now(),
+                    initialDate: widget.selectedDate ?? DateTime.now(),
                     firstDate: DateTime(1900),
                     lastDate: DateTime.now(),
                   );
                   if (picked != null) {
+                    widget.onDateChanged(picked);
                     _dobController.text =
-                        picked.toIso8601String().split('T').first;
+                        DateFormat('yyyy-MM-dd').format(picked);
                   }
                 },
-                validator: (value) => value!.isEmpty ? 'Date of birth is required.' : null,
+                validator: (value) =>
+                    value!.isEmpty ? 'Date of birth is required.' : null,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
@@ -175,7 +198,8 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                     _gender = newValue;
                   });
                 },
-                validator: (value) => value == null ? 'Gender is required.' : null,
+                validator: (value) =>
+                    value == null ? 'Gender is required.' : null,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
@@ -194,7 +218,8 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                     _maritalStatus = newValue;
                   });
                 },
-                validator: (value) => value == null ? 'Marital status is required.' : null,
+                validator: (value) =>
+                    value == null ? 'Marital status is required.' : null,
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -219,14 +244,17 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                             );
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Personal details updated successfully.')),
+                                const SnackBar(
+                                    content: Text(
+                                        'Personal details updated successfully.')),
                               );
                               context.pop();
                             }
                           } catch (e) {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: ${e.toString()}')),
+                                SnackBar(
+                                    content: Text('Error: ${e.toString()}')),
                               );
                             }
                           } finally {
@@ -297,14 +325,16 @@ class _ResidentialDetailsFormState extends State<ResidentialDetailsForm> {
                 controller: _countyController,
                 decoration: const InputDecoration(
                     labelText: 'County', border: OutlineInputBorder()),
-                validator: (value) => value!.isEmpty ? 'County is required.' : null,
+                validator: (value) =>
+                    value!.isEmpty ? 'County is required.' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _cityController,
                 decoration: const InputDecoration(
                     labelText: 'City/Town', border: OutlineInputBorder()),
-                validator: (value) => value!.isEmpty ? 'City or town is required.' : null,
+                validator: (value) =>
+                    value!.isEmpty ? 'City or town is required.' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -312,7 +342,8 @@ class _ResidentialDetailsFormState extends State<ResidentialDetailsForm> {
                 decoration: const InputDecoration(
                     labelText: 'Residential Address',
                     border: OutlineInputBorder()),
-                validator: (value) => value!.isEmpty ? 'Residential address is required.' : null,
+                validator: (value) =>
+                    value!.isEmpty ? 'Residential address is required.' : null,
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -334,14 +365,17 @@ class _ResidentialDetailsFormState extends State<ResidentialDetailsForm> {
                             );
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Residential details updated successfully.')),
+                                const SnackBar(
+                                    content: Text(
+                                        'Residential details updated successfully.')),
                               );
                               context.pop();
                             }
                           } catch (e) {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: ${e.toString()}')),
+                                SnackBar(
+                                    content: Text('Error: ${e.toString()}')),
                               );
                             }
                           } finally {

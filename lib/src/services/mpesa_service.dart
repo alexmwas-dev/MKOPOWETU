@@ -30,9 +30,11 @@ class MpesaService {
   }
 
   Future<String> _getAccessToken() async {
-    final String credentials = base64.encode(utf8.encode('$consumerKey:$consumerSecret'));
+    final String credentials =
+        base64.encode(utf8.encode('$consumerKey:$consumerSecret'));
     final response = await http.get(
-      Uri.parse('https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'),
+      Uri.parse(
+          'https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'),
       headers: {
         'Authorization': 'Basic $credentials',
       },
@@ -61,7 +63,8 @@ class MpesaService {
     final now = tz.TZDateTime.now(location);
     final timestamp = DateFormat('yyyyMMddHHmmss').format(now);
 
-    final String password = base64.encode(utf8.encode('$shortcode$passkey$timestamp'));
+    final String password =
+        base64.encode(utf8.encode('$shortcode$passkey$timestamp'));
 
     final response = await http.post(
       Uri.parse('https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest'),
@@ -97,13 +100,15 @@ class MpesaService {
     }
   }
 
-  Future<Map<String, dynamic>> checkTransactionStatus(String checkoutRequestId) async {
+  Future<Map<String, dynamic>> checkTransactionStatus(
+      String checkoutRequestId) async {
     final String accessToken = await _getAccessToken();
     tz.initializeTimeZones();
     final location = tz.getLocation('Africa/Nairobi');
     final now = tz.TZDateTime.now(location);
     final timestamp = DateFormat('yyyyMMddHHmmss').format(now);
-    final String password = base64.encode(utf8.encode('$shortcode$passkey$timestamp'));
+    final String password =
+        base64.encode(utf8.encode('$shortcode$passkey$timestamp'));
 
     final response = await http.post(
       Uri.parse('https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query'),

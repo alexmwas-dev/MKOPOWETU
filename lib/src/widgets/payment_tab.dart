@@ -45,7 +45,8 @@ class _PaymentTabState extends State<PaymentTab> {
       return;
     }
 
-    final phone = widget.useCurrentUserPhone ? user.phoneNumber : _phoneController.text;
+    final phone =
+        widget.useCurrentUserPhone ? user.phoneNumber : _phoneController.text;
 
     showDialog(
       context: context,
@@ -120,7 +121,8 @@ class _PaymentTabState extends State<PaymentTab> {
           children: [
             Icon(icon, color: color, size: 28),
             const SizedBox(width: 10),
-            Text(title, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+            Text(title,
+                style: TextStyle(color: color, fontWeight: FontWeight.bold)),
           ],
         ),
         content: Text(content, style: const TextStyle(fontSize: 16)),
@@ -136,7 +138,8 @@ class _PaymentTabState extends State<PaymentTab> {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(locale: 'en_KE', symbol: 'KES');
+    final currencyFormat =
+        NumberFormat.currency(locale: 'en_KE', symbol: 'KES');
     final paymentProvider = context.watch<PaymentProvider>();
 
     return SingleChildScrollView(
@@ -152,7 +155,8 @@ class _PaymentTabState extends State<PaymentTab> {
                 decoration: InputDecoration(
                   labelText: 'M-Pesa Phone Number',
                   prefixIcon: const Icon(Icons.phone),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 keyboardType: TextInputType.phone,
                 validator: (value) {
@@ -172,7 +176,8 @@ class _PaymentTabState extends State<PaymentTab> {
               decoration: InputDecoration(
                 labelText: 'Application Fee',
                 prefixIcon: const Icon(Icons.money),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
@@ -180,7 +185,8 @@ class _PaymentTabState extends State<PaymentTab> {
             Card(
               color: Colors.blue.shade50,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
               child: const Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Row(
@@ -201,14 +207,16 @@ class _PaymentTabState extends State<PaymentTab> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: paymentProvider.status == PaymentStatus.loading
                   ? null
                   : () => _processPayment(context),
               child: paymentProvider.status == PaymentStatus.loading
                   ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('Proceed to Pay', style: TextStyle(fontSize: 16, color: Colors.white)),
+                  : const Text('Proceed to Pay',
+                      style: TextStyle(fontSize: 16, color: Colors.white)),
             ),
           ],
         ),

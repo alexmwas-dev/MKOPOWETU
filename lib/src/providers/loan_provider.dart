@@ -7,6 +7,8 @@ import 'package:mkopo_wetu/src/services/loan_service.dart';
 import 'package:mkopo_wetu/src/services/payment_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+enum LoanStatus { initial, loading, loaded, error }
+
 class LoanProvider with ChangeNotifier {
   final LoanService _loanService = LoanService();
   final PaymentService _paymentService = PaymentService();
@@ -15,15 +17,24 @@ class LoanProvider with ChangeNotifier {
 
   List<Loan> _loans = [];
   List<Payment> _payments = [];
+  LoanStatus _status = LoanStatus.initial;
 
   List<Loan> get loans => _loans;
   List<Payment> get payments => _payments;
+  LoanStatus get status => _status;
 
   Future<void> fetchLoans() async {
     final user = _auth.currentUser;
     if (user != null) {
-      _loans = await _loanService.getLoans(user.uid);
-      _loans.sort((a, b) => b.date.compareTo(a.date)); // Sort by most recent
+      _status = LoanStatus.loading;
+      notifyListeners();
+      try {
+        _loans = await _loanService.getLoans(user.uid);
+        _loans.sort((a, b) => b.date.compareTo(a.date)); // Sort by most recent
+        _status = LoanStatus.loaded;
+      } catch (e) {
+        _status = LoanStatus.error;
+      }
       notifyListeners();
     }
   }
@@ -31,17 +42,21 @@ class LoanProvider with ChangeNotifier {
   Future<void> fetchPayments() async {
     final user = _auth.currentUser;
     if (user != null) {
-      _payments = await _paymentService.getPayments(user.uid);
+      _payments = await _paymentService.getPaymentHistory(user.uid);
       notifyListeners();
     }
   }
 
   Future<Map<String, dynamic>> isEligibleForLoan() async {
     if (_loans.any((loan) => loan.status == 'pending')) {
-      return {'eligible': false, 'message': 'You already have a pending loan application.'};
+      return {
+        'eligible': false,
+        'message': 'You already have a pending loan application.'
+      };
     }
 
-    final rejectedLoans = _loans.where((loan) => loan.status == 'rejected').toList();
+    final rejectedLoans =
+        _loans.where((loan) => loan.status == 'rejected').toList();
     if (rejectedLoans.isNotEmpty) {
       final lastRejectedLoan = rejectedLoans.first; // Already sorted
       final difference = DateTime.now().difference(lastRejectedLoan.date);
@@ -49,7 +64,8 @@ class LoanProvider with ChangeNotifier {
         final daysRemaining = 3 - difference.inDays;
         return {
           'eligible': false,
-          'message': 'You can try applying for a loan after $daysRemaining day(s).'
+          'message':
+              'You can try applying for a loan after $daysRemaining day(s).'
         };
       }
     }
@@ -66,7 +82,8 @@ class LoanProvider with ChangeNotifier {
     }
   }
 
-  Future<void> updateLoanPayment(String loanId, String checkoutRequestId) async {
+  Future<void> updateLoanPayment(
+      String loanId, String checkoutRequestId) async {
     final user = _auth.currentUser;
     if (user == null) {
       throw Exception('User not logged in');
@@ -136,7 +153,7 @@ class LoanProvider with ChangeNotifier {
         date: DateTime.now(),
       );
       await _paymentService.createPayment(userId, payment);
-      
+
       await fetchLoans();
       await fetchPayments();
 
@@ -147,7 +164,6 @@ class LoanProvider with ChangeNotifier {
           await updateLoanStatus(loan.id, 'rejected');
         }
       });
-
     } catch (e) {
       rethrow;
     }

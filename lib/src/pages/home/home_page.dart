@@ -35,7 +35,8 @@ class _HomePageState extends State<HomePage> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     if (authProvider.user != null) {
-      _loadDataFuture = Provider.of<LoanProvider>(context, listen: false).fetchLoans();
+      _loadDataFuture =
+          Provider.of<LoanProvider>(context, listen: false).fetchLoans();
     }
   }
 
@@ -125,12 +126,14 @@ class _HomePageState extends State<HomePage> {
               return _buildLoadingLoanCard();
             }
 
-            final latestLoan = loanProvider.loans.isNotEmpty ? loanProvider.loans.first : null;
+            final latestLoan =
+                loanProvider.loans.isNotEmpty ? loanProvider.loans.first : null;
 
             return FutureBuilder<Map<String, dynamic>>(
               future: loanProvider.isEligibleForLoan(),
               builder: (context, eligibilitySnapshot) {
-                if (eligibilitySnapshot.connectionState == ConnectionState.waiting) {
+                if (eligibilitySnapshot.connectionState ==
+                    ConnectionState.waiting) {
                   return _buildLoadingLoanCard();
                 }
 
@@ -139,7 +142,8 @@ class _HomePageState extends State<HomePage> {
 
                 if (eligibilitySnapshot.hasData) {
                   isEligible = eligibilitySnapshot.data!['eligible'];
-                  eligibilityMessage = eligibilitySnapshot.data!['message'] ?? '';
+                  eligibilityMessage =
+                      eligibilitySnapshot.data!['message'] ?? '';
                 }
 
                 String title = 'Apply for a Loan';
@@ -157,23 +161,28 @@ class _HomePageState extends State<HomePage> {
                       icon = Icons.hourglass_empty_rounded;
                       cardColor = Colors.orange;
                       buttonText = 'View Details';
-                      onPressed = () => context.go('/loan/details', extra: latestLoan);
+                      onPressed =
+                          () => context.go('/loan/details', extra: latestLoan);
                       break;
                     case 'approved':
                       title = 'Loan Approved';
-                      subtitle = 'Congratulations! Your loan of KSh ${NumberFormat('#,##0').format(latestLoan.amount)} is ready.';
+                      subtitle =
+                          'Congratulations! Your loan of KSh ${NumberFormat('#,##0').format(latestLoan.amount)} is ready.';
                       icon = Icons.check_circle_rounded;
                       cardColor = Colors.green;
                       buttonText = 'View Loan';
-                      onPressed = () => context.go('/loan/details', extra: latestLoan);
+                      onPressed =
+                          () => context.go('/loan/details', extra: latestLoan);
                       break;
                     case 'on-hold':
                       title = 'Payment Required';
-                      subtitle = 'A payment is required to process your application.';
+                      subtitle =
+                          'A payment is required to process your application.';
                       icon = Icons.payment_rounded;
                       cardColor = Colors.blue;
                       buttonText = 'Make Payment';
-                      onPressed = () => context.push('/loan/payment', extra: {'loan': latestLoan});
+                      onPressed = () => context
+                          .push('/loan/payment', extra: {'loan': latestLoan});
                       break;
                     case 'rejected':
                       title = 'Loan Rejected';
@@ -181,7 +190,8 @@ class _HomePageState extends State<HomePage> {
                       icon = Icons.cancel_rounded;
                       cardColor = Colors.red;
                       buttonText = 'Apply Again';
-                      onPressed = isEligible ? () => context.go('/loan/apply') : null;
+                      onPressed =
+                          isEligible ? () => context.go('/loan/apply') : null;
                       break;
                     case 'paid':
                       title = 'All Loans Paid';
@@ -194,7 +204,8 @@ class _HomePageState extends State<HomePage> {
 
                 return Card(
                   elevation: 4,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   color: cardColor,
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -208,9 +219,14 @@ class _HomePageState extends State<HomePage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                                  Text(title,
+                                      style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white)),
                                   const SizedBox(height: 4),
-                                  Text(subtitle, style: TextStyle(color: Colors.white70)),
+                                  Text(subtitle,
+                                      style: TextStyle(color: Colors.white70)),
                                 ],
                               ),
                             ),
@@ -237,7 +253,6 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
-
 
   Widget _buildLoadingLoanCard() {
     return Card(
@@ -285,7 +300,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
 
   Widget _buildInfoSubmissionRow() {
     return Row(
@@ -343,7 +357,8 @@ class _HomePageState extends State<HomePage> {
       color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        leading:            Icon(icon, size: 24, color: Theme.of(context).colorScheme.primary),
+        leading:
+            Icon(icon, size: 24, color: Theme.of(context).colorScheme.primary),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
         onTap: onTap,

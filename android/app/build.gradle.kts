@@ -1,65 +1,69 @@
 import java.util.Properties
 
 plugins {
-    id("com.android.application")
-    // START: FlutterFire Configuration
-    id("com.google.gms.google-services")
-    // END: FlutterFire Configuration
-    id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
-    id("dev.flutter.flutter-gradle-plugin")
+        id("com.android.application")
+            // START: FlutterFire Configuration
+                id("com.google.gms.google-services")
+                    // END: FlutterFire Configuration
+                        id("kotlin-android")
+                            id("dev.flutter.flutter-gradle-plugin") // Flutter must be applied last
 }
-
 
 val keyProperties = Properties()
 val keyPropertiesFile = rootProject.file("key.properties")
 if (keyPropertiesFile.exists()) {
-    keyPropertiesFile.inputStream().use { keyProperties.load(it) }
+        keyPropertiesFile.inputStream().use { keyProperties.load(it) }
 }
 
 android {
-    namespace = "com.mkopowetu.ke"
-    compileSdk = 36
-    ndkVersion = flutter.ndkVersion
+        namespace = "com.mkopowetu.ke"
+            compileSdk = 36 // ✅ Safe target (36 not fully stable yet)
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
+                ndkVersion = flutter.ndkVersion
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
+                    compileOptions {
+                                sourceCompatibility = JavaVersion.VERSION_11
+                                        targetCompatibility = JavaVersion.VERSION_11
+                    }
 
-    signingConfigs {
-        create("release") {
-            keyAlias = keyProperties["keyAlias"] as String
-            keyPassword = keyProperties["keyPassword"] as String
-            storeFile = file(keyProperties["storeFile"] as String)
-            storePassword = keyProperties["storePassword"] as String
-        }
-    }
+                        kotlinOptions {
+                                    jvmTarget = "11"
+                        }
 
-    defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.mkopowetu.ke"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
-    }
+                            signingConfigs {
+                                        create("release") {
+                                                        if (keyPropertiesFile.exists()) {
+                                                                            keyAlias = keyProperties["keyAlias"] as String
+                                                                                            keyPassword = keyProperties["keyPassword"] as String
+                                                                                                            storeFile = file(keyProperties["storeFile"] as String)
+                                                                                                                            storePassword = keyProperties["storePassword"] as String
+                                                        }
+                                        }
+                            }
 
-    buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-             signingConfig = signingConfigs.getByName("release")
-        }
-    }
+                                defaultConfig {
+                                            applicationId = "com.mkopowetu.ke"
+                                                    minSdk = flutter.minSdkVersion // ✅ Android 5+
+                                                            targetSdk = 34
+                                                                    versionCode = flutter.versionCode
+                                                                            versionName = flutter.versionName
+                                                                                    multiDexEnabled = true // ✅ Prevent method count issues on older devices
+                                }
+
+                                    buildTypes {
+                                                release {
+                                                                signingConfig = signingConfigs.getByName("release")
+                                                                            isShrinkResources = false
+                                                                                        isMinifyEnabled = false
+                                                                                                    // ✅ Enable these later if you want code shrinking/obfuscation:
+                                                                                                                // proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+                                                }
+                                                        debug {
+                                                                        signingConfig = signingConfigs.getByName("release") // Optional: sign debug with release key
+                                                        }
+                                    }
 }
 
 flutter {
-    source = "../.."
+        source = "../.."
 }

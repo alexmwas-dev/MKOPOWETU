@@ -86,8 +86,9 @@ class _FinancialInfoPageState extends State<FinancialInfoPage> {
                     prefixIcon: Icon(Icons.money_off_outlined),
                     border: OutlineInputBorder()),
                 keyboardType: TextInputType.number,
-                validator: (value) =>
-                    value!.isEmpty ? 'Estimated monthly expenses are required.' : null,
+                validator: (value) => value!.isEmpty
+                    ? 'Estimated monthly expenses are required.'
+                    : null,
               ),
               const SizedBox(height: 30),
               _isLoading

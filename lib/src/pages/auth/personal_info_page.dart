@@ -23,29 +23,37 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
   String? _maritalStatus;
 
   bool _isLoading = false;
+  DateTime? _selectedDate;
 
   @override
   void initState() {
     super.initState();
-    // Use post-frame callback to access provider safely
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final user = authProvider.user;
-      if (user != null) {
-        _nameController.text = user.name ?? '';
-        _emailController.text = user.email ?? '';
-        _idController.text = user.idNumber ?? '';
-        _dobController.text = user.dob ?? '';
-        if (user.gender != null &&
-            ['Male', 'Female', 'Other'].contains(user.gender)) {
-          _gender = user.gender;
+    WidgetsBinding.instance.endOfFrame.then((_) {
+      if (mounted) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final user = authProvider.user;
+        if (user != null) {
+          _nameController.text = user.name ?? '';
+          _emailController.text = user.email ?? '';
+          _idController.text = user.idNumber ?? '';
+          if (user.dob != null) {
+            _selectedDate = DateTime.tryParse(user.dob!);
+            if (_selectedDate != null) {
+              _dobController.text =
+                  DateFormat('yyyy-MM-dd').format(_selectedDate!);
+            }
+          }
+          if (user.gender != null &&
+              ['Male', 'Female', 'Other'].contains(user.gender)) {
+            _gender = user.gender;
+          }
+          if (user.maritalStatus != null &&
+              ['Single', 'Married', 'Divorced', 'Widowed']
+                  .contains(user.maritalStatus)) {
+            _maritalStatus = user.maritalStatus;
+          }
+          setState(() {});
         }
-        if (user.maritalStatus != null &&
-            ['Single', 'Married', 'Divorced', 'Widowed']
-                .contains(user.maritalStatus)) {
-          _maritalStatus = user.maritalStatus;
-        }
-        setState(() {});
       }
     });
   }
@@ -53,12 +61,13 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
   Future<void> _selectDate() async {
     DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: _selectedDate ?? DateTime.now(),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
-    if (picked != null) {
+    if (picked != null && picked != _selectedDate) {
       setState(() {
+        _selectedDate = picked;
         _dobController.text = DateFormat('yyyy-MM-dd').format(picked);
       });
     }
@@ -164,7 +173,8 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
                     _gender = newValue;
                   });
                 },
-                validator: (value) => value == null ? 'Gender is required.' : null,
+                validator: (value) =>
+                    value == null ? 'Gender is required.' : null,
               ),
               const SizedBox(height: 20),
               DropdownButtonFormField<String>(

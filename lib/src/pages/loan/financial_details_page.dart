@@ -79,8 +79,9 @@ class _FinancialDetailsPageState extends State<FinancialDetailsPage> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.work),
                 ),
-                validator: (value) =>
-                    value!.isEmpty ? 'Please enter your employment status.' : null,
+                validator: (value) => value!.isEmpty
+                    ? 'Please enter your employment status.'
+                    : null,
               ),
               const SizedBox(height: 16.0),
               TextFormField(

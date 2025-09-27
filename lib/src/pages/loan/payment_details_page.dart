@@ -10,7 +10,8 @@ class PaymentDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(locale: 'en_KE', symbol: 'KES');
+    final currencyFormat =
+        NumberFormat.currency(locale: 'en_KE', symbol: 'KES');
     final dateFormat = DateFormat('MMM d, yyyy, h:mm a');
 
     return Scaffold(
@@ -18,7 +19,8 @@ class PaymentDetailsPage extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => context.go('/loan/history', extra: {'initialTabIndex': 1}),
+          onPressed: () =>
+              context.go('/loan/history', extra: {'initialTabIndex': 1}),
         ),
         title: const Text('Payment Details'),
         backgroundColor: Colors.transparent,

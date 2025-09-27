@@ -7,7 +7,10 @@ class PaymentService {
 
   Future<void> createPayment(String userId, Payment payment) async {
     try {
-      await _dbRef.child('payments').child(userId).child(payment.id).set(payment.toJson());
+      await _dbRef
+          .child('payments')
+          .child(payment.loanId)
+          .set(payment.toJson());
     } catch (e, s) {
       developer.log(
         'Error creating payment',
@@ -19,33 +22,54 @@ class PaymentService {
     }
   }
 
-  Future<List<Payment>> getPayments(String userId) async {
+  Future<List<Payment>> getPaymentHistory(String userId) async {
     try {
-      final snapshot = await _dbRef.child('payments').child(userId).get();
+      final snapshot = await _dbRef
+          .child('payments')
+          .orderByChild('userId')
+          .equalTo(userId)
+          .get();
       if (snapshot.exists && snapshot.value is Map) {
         final data = Map<dynamic, dynamic>.from(snapshot.value as Map);
-        return data.entries.map((entry) {
-          if (entry.value is Map) {
-            return Payment.fromJson(entry.key, Map<String, dynamic>.from(entry.value));
-          } else {
-            developer.log(
-              'Invalid payment data format for key: ${entry.key}',
-              name: 'PaymentService',
-              level: 900, // Warning
-            );
-            return null;
-          }
-        }).where((payment) => payment != null).cast<Payment>().toList();
+        return data.entries
+            .map((entry) {
+              if (entry.value is Map) {
+                return Payment.fromJson(
+                    entry.key, Map<String, dynamic>.from(entry.value));
+              } else {
+                return null;
+              }
+            })
+            .where((payment) => payment != null)
+            .cast<Payment>()
+            .toList();
       }
       return [];
     } catch (e, s) {
       developer.log(
-        'Error fetching payments',
+        'Error fetching payment history',
         name: 'PaymentService',
         error: e,
         stackTrace: s,
       );
       return [];
     }
+  }
+
+  Stream<Payment?> getPaymentStatus(String loanId) {
+    return _dbRef.child('payments').child(loanId).onValue.map((event) {
+      if (event.snapshot.exists && event.snapshot.value is Map) {
+        return Payment.fromJson(event.snapshot.key!,
+            Map<String, dynamic>.from(event.snapshot.value as Map));
+      }
+      return null;
+    }).handleError((e, s) {
+      developer.log(
+        'Error in payment status stream for loanId: $loanId',
+        name: 'PaymentService',
+        error: e,
+        stackTrace: s,
+      );
+    });
   }
 }

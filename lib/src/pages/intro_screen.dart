@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:introduction_screen/introduction_screen.dart';
@@ -78,12 +77,14 @@ class _IntroScreenState extends State<IntroScreen> {
               pages: [
                 PageViewModel(
                   title: "Welcome to Mkopo Wetu",
-                  body: "Your trusted partner for quick and reliable mobile loans.",
+                  body:
+                      "Your trusted partner for quick and reliable mobile loans.",
                   image: const Icon(Icons.monetization_on, size: 100),
                 ),
                 PageViewModel(
                   title: "Secure and Confidential",
-                  body: "Your data is safe with us. We value your privacy and security.",
+                  body:
+                      "Your data is safe with us. We value your privacy and security.",
                   image: const Icon(Icons.security, size: 100),
                 ),
                 PageViewModel(
@@ -93,7 +94,8 @@ class _IntroScreenState extends State<IntroScreen> {
                 ),
                 PageViewModel(
                   title: "Instant Loan Decisions",
-                  body: "Get a decision on your loan application within minutes.",
+                  body:
+                      "Get a decision on your loan application within minutes.",
                   image: const Icon(Icons.flash_on, size: 100),
                 ),
               ],
