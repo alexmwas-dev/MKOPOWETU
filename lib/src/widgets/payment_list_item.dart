@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mkopo_wetu/src/models/payment_model.dart';
 
 class PaymentListItem extends StatelessWidget {
@@ -56,7 +57,7 @@ class PaymentListItem extends StatelessWidget {
       child: InkWell(
         onTap: () {
           // Navigate to a details page if you have one
-          // context.go('/loan/payment-details', extra: payment);
+          context.go('/loan/payment-details', extra: payment);
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(

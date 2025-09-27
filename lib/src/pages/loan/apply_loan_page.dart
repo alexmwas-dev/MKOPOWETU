@@ -155,7 +155,7 @@ class _ApplyLoanPageState extends State<ApplyLoanPage> {
                 backgroundColor: Theme.of(context).primaryColor,
                 foregroundColor: Colors.white,
               ),
-              child: const Text('Proceed to Payment',
+              child: const Text('Apply',
                   style: TextStyle(fontSize: 18)),
             ),
           ],

@@ -54,7 +54,7 @@ class _PaymentPageState extends State<PaymentPage>
   Widget build(BuildContext context) {
     final paymentProvider = Provider.of<PaymentProvider>(context);
 
-    if (paymentProvider.status == PaymentStatus.success) {
+    if (paymentProvider.status == PaymentStatus.paid) {
       return const PaymentSuccessScreen();
     }
 

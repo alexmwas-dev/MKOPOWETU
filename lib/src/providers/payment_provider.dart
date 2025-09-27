@@ -12,7 +12,7 @@ import 'dart:developer' as developer;
 enum PaymentStatus {
   idle,
   loading,
-  success,
+  paid,
   failed,
   cancelled,
   timeout,
@@ -115,8 +115,8 @@ class PaymentProvider with ChangeNotifier {
           _paymentService.getPaymentStatus(loanId).listen((payment) {
         if (payment != null && !completer.isCompleted) {
           if (payment.status == 'paid') {
-            _status = PaymentStatus.success;
-            completer.complete(PaymentStatus.success);
+            _status = PaymentStatus.paid;
+            completer.complete(PaymentStatus.paid);
             _paymentStatusSubscription?.cancel();
           } else if (payment.status == 'failed') {
             _status = PaymentStatus.failed;

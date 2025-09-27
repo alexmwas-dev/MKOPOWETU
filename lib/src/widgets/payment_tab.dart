@@ -79,7 +79,7 @@ class _PaymentTabState extends State<PaymentTab> {
     // ignore: use_build_context_synchronously
     Navigator.of(context).pop();
 
-    if (status != PaymentStatus.success) {
+    if (status != PaymentStatus.paid) {
       // ignore: use_build_context_synchronously
       _showResultDialog(context, status);
     }
@@ -96,6 +96,12 @@ class _PaymentTabState extends State<PaymentTab> {
         content = 'Your payment could not be processed. Please try again.';
         color = Colors.red;
         icon = Icons.error;
+        break;
+      case PaymentStatus.paid:
+        title = 'Payment Success';
+        content = 'Your payment was received, your loan status has been updated.';
+        color = Colors.green;
+        icon = Icons.check_circle;
         break;
       case PaymentStatus.cancelled:
         title = 'Payment Cancelled';
@@ -195,7 +201,7 @@ class _PaymentTabState extends State<PaymentTab> {
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'A payment prompt will be sent to your phone.',
+                        'A payment prompt will be sent to your phone.Please note that this amount is Refundable',
                         style: TextStyle(fontSize: 14),
                       ),
                     ),
