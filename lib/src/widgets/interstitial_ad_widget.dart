@@ -6,20 +6,10 @@ class InterstitialAdWidget {
   InterstitialAd? _interstitialAd;
 
   void loadAd() {
-    InterstitialAd.load(
-      adUnitId: AdManager.interstitialAdUnitId,
-      request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) {
-          developer.log('Interstitial ad loaded.');
-          _interstitialAd = ad;
-        },
-        onAdFailedToLoad: (error) {
-          developer.log('Interstitial ad failed to load: $error');
-          _interstitialAd = null;
-        },
-      ),
-    );
+    AdManager.createInterstitialAd((ad) {
+      developer.log('Interstitial ad loaded.');
+      _interstitialAd = ad;
+    });
   }
 
   void showAdWithCallback(void Function() onAdClosed) {

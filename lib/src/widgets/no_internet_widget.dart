@@ -12,12 +12,12 @@ class NoInternetWidget extends StatelessWidget {
           children: [
             Icon(
               Icons.wifi_off,
-              size: 80,
-              color: Colors.red,
+              size: 65,
+              color: Colors.redAccent,
             ),
             SizedBox(height: 20),
             Text(
-              'Oops! You are currently Offline',
+              'Oops! No Internet',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,

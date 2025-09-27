@@ -24,7 +24,7 @@ class _EditProfilePageState extends State<EditProfilePage>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _interstitialAdWidget.loadAd();
-    WidgetsBinding.instance.endOfFrame.then((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _interstitialAdWidget.showAdWithCallback(() {});
         final user = Provider.of<AuthProvider>(context, listen: false).user;
@@ -38,6 +38,7 @@ class _EditProfilePageState extends State<EditProfilePage>
   @override
   void dispose() {
     _tabController.dispose();
+    _interstitialAdWidget.dispose();
     super.dispose();
   }
 

@@ -47,19 +47,10 @@ class _SplashScreenState extends State<SplashScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.monetization_on,
-                size: 150,
-                color: Theme.of(context).primaryColor,
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Mkopo Wetu',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
-                ),
+              Image.asset(
+                'assets/images/ic_launcher.png',
+                width: 80,
+                height: 80,
               ),
             ],
           ),

@@ -1,6 +1,7 @@
 name: mkopo_wetu
 description: "Mkopo Wetu"
 publish_to: 'none'
+
 version: 1.0.0+1
 
 environment:
@@ -40,4 +41,5 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/images/
     - assets/animations/

@@ -178,10 +178,7 @@ class AppRouter {
                 },
               ),
             ]),
-        GoRoute(
-          path: '/loan',
-          redirect: (_, __) => '/loan/apply',
-          routes: [
+        GoRoute(path: '/loan', routes: [
           GoRoute(
             path: 'apply',
             builder: (BuildContext context, GoRouterState state) {

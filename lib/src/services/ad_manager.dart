@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -9,7 +10,7 @@ class AdManager {
       return 'ca-app-pub-2979093467620072/2915636747';
     } else {
       // iOS
-      return 'ca-app-pub-3940256099942544/2934735716';
+      return 'ca-app-pub-2979093467620072/2915636747';
     }
   }
 
@@ -18,7 +19,7 @@ class AdManager {
       return 'ca-app-pub-2979093467620072/9399839997';
     } else {
       // iOS
-      return 'ca-app-pub-3940256099942544/4411468910';
+      return  'ca-app-pub-2979093467620072/9399839997';
     }
   }
 
@@ -28,6 +29,21 @@ class AdManager {
       size: AdSize.banner,
       request: const AdRequest(),
       listener: listener,
+    )..load();
+  }
+
+  static void createInterstitialAd(
+    void Function(InterstitialAd) onAdLoaded,
+  ) {
+    InterstitialAd.load(
+      adUnitId: interstitialAdUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: onAdLoaded,
+        onAdFailedToLoad: (LoadAdError error) {
+          log('InterstitialAd failed to load: $error');
+        },
+      ),
     );
   }
 }
