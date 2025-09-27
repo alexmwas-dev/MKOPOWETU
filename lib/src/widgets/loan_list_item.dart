@@ -13,6 +13,8 @@ class LoanListItem extends StatelessWidget {
     final currencyFormat =
         NumberFormat.currency(locale: 'en_KE', symbol: 'KES ');
     final dateFormat = DateFormat('MMM d, yyyy');
+    // Use NumberFormat for robust percentage formatting
+    final percentFormat = NumberFormat('0.0#%');
     final totalRepayment = loan.amount + loan.interestAmount;
 
     return Card(
@@ -60,7 +62,8 @@ class LoanListItem extends StatelessWidget {
               ),
               const SizedBox(height: 5),
               Text(
-                'Interest: ${currencyFormat.format(loan.interestAmount)} (${(loan.interestRate * 100).toStringAsFixed(1)}% daily)',
+                // Display the correctly formatted percentage
+                'Interest: ${currencyFormat.format(loan.interestAmount)} (${percentFormat.format(loan.interestRate)} daily)',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 5),

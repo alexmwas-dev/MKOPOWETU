@@ -82,39 +82,6 @@ class LoanProvider with ChangeNotifier {
     }
   }
 
-  Future<void> updateLoanPayment(
-      String loanId, String checkoutRequestId) async {
-    final user = _auth.currentUser;
-    if (user == null) {
-      throw Exception('User not logged in');
-    }
-
-    try {
-      final loanFee = await _configService.getLoanFee();
-      final payment = Payment(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        userId: user.uid,
-        loanId: loanId,
-        amount: loanFee,
-        status: PaymentStatus.initiated,
-        checkoutRequestId: checkoutRequestId,
-        date: DateTime.now(),
-      );
-      await _paymentService.createPayment(user.uid, payment);
-      await fetchPayments();
-
-      Timer(const Duration(minutes: 2), () async {
-        await fetchLoans();
-        final currentLoan = _loans.firstWhere((l) => l.id == loanId);
-        if (currentLoan.status == 'on-hold') {
-          await updateLoanStatus(loanId, 'rejected');
-        }
-      });
-    } catch (e) {
-      rethrow;
-    }
-  }
-
   Future<void> createLoanAndPayment({
     required String userId,
     required String loanId,
@@ -123,6 +90,7 @@ class LoanProvider with ChangeNotifier {
     required double interestAmount,
     required DateTime repaymentDate,
     required String checkoutRequestId,
+    required String merchantRequestId,
   }) async {
     try {
       final eligibility = await isEligibleForLoan();
@@ -148,11 +116,12 @@ class LoanProvider with ChangeNotifier {
         userId: userId,
         loanId: loanId,
         amount: loanFee,
-        status: PaymentStatus.initiated,
+        status: 'initiated',
         checkoutRequestId: checkoutRequestId,
-        date: DateTime.now(),
+        merchantRequestId: merchantRequestId,
+        createdAt: DateTime.now(),
       );
-      await _paymentService.createPayment(userId, payment);
+      await _paymentService.createPayment(payment: payment);
 
       await fetchLoans();
       await fetchPayments();

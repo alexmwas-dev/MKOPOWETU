@@ -292,8 +292,7 @@ class _ApplyLoanPageState extends State<ApplyLoanPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Loan Details',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Loan Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             ValueListenableBuilder<double>(
               valueListenable: _loanAmount,

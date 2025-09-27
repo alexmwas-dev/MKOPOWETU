@@ -114,7 +114,7 @@ class _LoanHistoryPageState extends State<LoanHistoryPage>
   Widget _buildPaymentRecordView() {
     return Consumer<PaymentProvider>(
       builder: (context, paymentProvider, child) {
-        if (paymentProvider.status == PaymentStatus.loading) {
+        if (paymentProvider.status == PaymentStatusUI.loading) {
           return const Center(child: CircularProgressIndicator());
         }
         final payments = paymentProvider.payments;

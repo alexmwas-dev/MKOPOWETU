@@ -99,35 +99,4 @@ class MpesaService {
       throw Exception('Failed to initiate STK push: ${response.body}');
     }
   }
-
-  Future<Map<String, dynamic>> checkTransactionStatus(
-      String checkoutRequestId) async {
-    final String accessToken = await _getAccessToken();
-    tz.initializeTimeZones();
-    final location = tz.getLocation('Africa/Nairobi');
-    final now = tz.TZDateTime.now(location);
-    final timestamp = DateFormat('yyyyMMddHHmmss').format(now);
-    final String password =
-        base64.encode(utf8.encode('$shortcode$passkey$timestamp'));
-
-    final response = await http.post(
-      Uri.parse('https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-      },
-      body: json.encode({
-        'BusinessShortCode': shortcode,
-        'Password': password,
-        'Timestamp': timestamp,
-        'CheckoutRequestID': checkoutRequestId,
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to check transaction status: ${response.body}');
-    }
-  }
 }

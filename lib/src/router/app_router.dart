@@ -25,6 +25,7 @@ import 'package:mkopo_wetu/src/pages/other/loan_terms_page.dart';
 import 'package:mkopo_wetu/src/pages/other/contact_us_page.dart';
 import 'package:mkopo_wetu/src/pages/other/faq_page.dart';
 import 'package:mkopo_wetu/src/providers/auth_provider.dart';
+import 'package:mkopo_wetu/src/widgets/payment_success_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppRouter {
@@ -177,7 +178,10 @@ class AppRouter {
                 },
               ),
             ]),
-        GoRoute(path: '/loan', routes: [
+        GoRoute(
+          path: '/loan',
+          redirect: (_, __) => '/loan/apply',
+          routes: [
           GoRoute(
             path: 'apply',
             builder: (BuildContext context, GoRouterState state) {
@@ -221,6 +225,12 @@ class AppRouter {
             builder: (BuildContext context, GoRouterState state) {
               final payment = state.extra as Payment;
               return PaymentDetailsPage(payment: payment);
+            },
+          ),
+          GoRoute(
+            path: 'success',
+            builder: (BuildContext context, GoRouterState state) {
+              return const PaymentSuccessScreen();
             },
           ),
         ]),

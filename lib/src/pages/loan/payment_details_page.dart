@@ -57,7 +57,7 @@ class PaymentDetailsPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       Chip(
-                        label: Text(payment.status.toString().split('.').last),
+                        label: Text(payment.status),
                         backgroundColor: Colors.white,
                         labelStyle: const TextStyle(color: Colors.green),
                       ),
@@ -100,7 +100,7 @@ class PaymentDetailsPage extends StatelessWidget {
                     _buildDetailRow(
                       icon: Icons.calendar_today,
                       label: 'Payment Date',
-                      value: dateFormat.format(payment.date),
+                      value: dateFormat.format(payment.createdAt),
                     ),
                   ],
                 ),

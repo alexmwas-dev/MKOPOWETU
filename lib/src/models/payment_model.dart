@@ -2,6 +2,8 @@ enum PaymentStatus {
   paid,
   initiated,
   failed,
+  cancelled,
+  timeout,
 }
 
 class Payment {
@@ -9,9 +11,10 @@ class Payment {
   final String userId;
   final String loanId;
   final double amount;
-  final PaymentStatus status;
+  final String status;
   final String checkoutRequestId;
-  final DateTime date;
+  final String merchantRequestId;
+  final DateTime createdAt;
 
   Payment({
     required this.id,
@@ -20,7 +23,8 @@ class Payment {
     required this.amount,
     required this.status,
     required this.checkoutRequestId,
-    required this.date,
+    required this.merchantRequestId,
+    required this.createdAt,
   });
 
   factory Payment.fromJson(String id, Map<String, dynamic> json) {
@@ -29,9 +33,12 @@ class Payment {
       userId: json['userId'] ?? '',
       loanId: json['loanId'] ?? '',
       amount: (json['amount'] ?? 0).toDouble(),
-      status: _getStatusFromString(json['status'] ?? 'initiated'),
+      status: json['status'] ?? 'initiated',
       checkoutRequestId: json['checkoutRequestId'] ?? '',
-      date: DateTime.parse(json['date']),
+      merchantRequestId: json['merchantRequestId'] ?? '',
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(), // Fallback to current time if createdAt is null
     );
   }
 
@@ -40,20 +47,10 @@ class Payment {
       'userId': userId,
       'loanId': loanId,
       'amount': amount,
-      'status': status.toString().split('.').last,
+      'status': status,
       'checkoutRequestId': checkoutRequestId,
-      'date': date.toIso8601String(),
+      'merchantRequestId': merchantRequestId,
+      'createdAt': createdAt.toIso8601String(),
     };
-  }
-
-  static PaymentStatus _getStatusFromString(String status) {
-    switch (status.toLowerCase()) {
-      case 'paid':
-        return PaymentStatus.paid;
-      case 'failed':
-        return PaymentStatus.failed;
-      default:
-        return PaymentStatus.initiated;
-    }
   }
 }

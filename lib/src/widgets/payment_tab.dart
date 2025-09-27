@@ -8,18 +8,22 @@ import 'package:provider/provider.dart';
 
 class PaymentTab extends StatefulWidget {
   final Loan? loan;
+  final String loanId;
   final double? loanAmount;
   final int? repaymentDays;
   final double loanFee;
   final bool useCurrentUserPhone;
+  final double interestRate;
 
   const PaymentTab({
     super.key,
     this.loan,
+    required this.loanId,
     this.loanAmount,
     this.repaymentDays,
     required this.loanFee,
     required this.useCurrentUserPhone,
+    required this.interestRate,
   });
 
   @override
@@ -71,52 +75,61 @@ class _PaymentTabState extends State<PaymentTab> {
       phoneNumber: phone,
       loanProvider: loanProvider,
       userId: user.uid,
-      loan: widget.loan,
+      loanId: widget.loanId,
       loanAmount: widget.loanAmount,
       repaymentDays: widget.repaymentDays,
+      interestRate: widget.interestRate,
     );
 
     // ignore: use_build_context_synchronously
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(); // Close the processing dialog
 
-    if (status != PaymentStatus.paid) {
-      // ignore: use_build_context_synchronously
-      _showResultDialog(context, status);
-    }
+    // ignore: use_build_context_synchronously
+    _showResultDialog(context, status);
   }
 
-  void _showResultDialog(BuildContext context, PaymentStatus status) {
+  void _showResultDialog(BuildContext context, PaymentStatusUI status) {
     String title, content;
     Color color;
     IconData icon;
 
     switch (status) {
-      case PaymentStatus.failed:
+      case PaymentStatusUI.failed:
         title = 'Payment Failed';
-        content = 'Your payment could not be processed. Please try again.';
+        content =
+            'Your payment could not be processed. Please check your details and try again.';
         color = Colors.red;
         icon = Icons.error;
         break;
-      case PaymentStatus.paid:
-        title = 'Payment Success';
-        content = 'Your payment was received, your loan status has been updated.';
+      case PaymentStatusUI.paid:
+        title = 'Payment Successful';
+        content =
+            'Your payment was received, and your loan status has been updated. You can check the loan status on the home page.';
         color = Colors.green;
         icon = Icons.check_circle;
         break;
-      case PaymentStatus.cancelled:
+      case PaymentStatusUI.cancelled:
         title = 'Payment Cancelled';
-        content = 'The payment was cancelled.';
+        content =
+            'You cancelled the payment. You can try again if you wish to proceed.';
         color = Colors.orange;
         icon = Icons.cancel;
         break;
-      case PaymentStatus.timeout:
+      case PaymentStatusUI.timeout:
         title = 'Payment Timeout';
-        content = 'The payment request timed out. Please try again.';
+        content =
+            'The payment request timed out. Please try again. Ensure you have a stable internet connection.';
         color = Colors.grey;
         icon = Icons.timer_off;
         break;
       default:
-        return;
+        // For statuses like 'initiated' or 'loading', which shouldn't normally be shown here
+        title = 'Payment In Progress';
+        content =
+            'The payment is still being processed. You will be notified shortly.';
+        color = Colors.blue;
+        icon = Icons.info;
+        break;
     }
 
     showDialog(
@@ -134,7 +147,14 @@ class _PaymentTabState extends State<PaymentTab> {
         content: Text(content, style: const TextStyle(fontSize: 16)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              Navigator.of(context).pop();
+              if (status == PaymentStatusUI.paid) {
+                // Optionally navigate to a specific screen after success
+                // For example, back to the main loan list
+                Navigator.of(context).pop();
+              }
+            },
             child: const Text('OK', style: TextStyle(fontSize: 16)),
           ),
         ],
@@ -170,7 +190,7 @@ class _PaymentTabState extends State<PaymentTab> {
                     return 'Valid phone number required.';
                   }
                   if (!RegExp(r'^(?:254)?[0-9]{9}$').hasMatch(value)) {
-                    return 'Invalid format. Use 2547...';
+                    return 'Invalid format. Use 254...';
                   }
                   return null;
                 },
@@ -201,7 +221,7 @@ class _PaymentTabState extends State<PaymentTab> {
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'A payment prompt will be sent to your phone.Please note that this amount is Refundable',
+                        'A payment prompt will be sent to your phone. Please note that this amount is Refundable if the loan is not approved.',
                         style: TextStyle(fontSize: 14),
                       ),
                     ),
@@ -216,10 +236,10 @@ class _PaymentTabState extends State<PaymentTab> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
               ),
-              onPressed: paymentProvider.status == PaymentStatus.loading
+              onPressed: paymentProvider.status == PaymentStatusUI.loading
                   ? null
                   : () => _processPayment(context),
-              child: paymentProvider.status == PaymentStatus.loading
+              child: paymentProvider.status == PaymentStatusUI.loading
                   ? const CircularProgressIndicator(color: Colors.white)
                   : const Text('Proceed to Pay',
                       style: TextStyle(fontSize: 16, color: Colors.white)),

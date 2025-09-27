@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:mkopo_wetu/src/models/loan_model.dart';
 import 'package:mkopo_wetu/src/models/payment_model.dart';
 import 'package:mkopo_wetu/src/providers/loan_provider.dart';
 import 'package:mkopo_wetu/src/services/config_service.dart';
@@ -9,7 +8,7 @@ import 'package:mkopo_wetu/src/services/payment_service.dart';
 import 'dart:developer' as developer;
 
 // Enum to be returned to the UI layer
-enum PaymentStatus {
+enum PaymentStatusUI {
   idle,
   loading,
   paid,
@@ -24,12 +23,11 @@ class PaymentProvider with ChangeNotifier {
   final ConfigService _configService = ConfigService();
   MpesaService? _mpesaService;
   List<Payment> _payments = [];
-  // Internal state for the provider
-  PaymentStatus _status = PaymentStatus.idle;
+  PaymentStatusUI _status = PaymentStatusUI.idle;
   StreamSubscription<Payment?>? _paymentStatusSubscription;
 
   List<Payment> get payments => _payments;
-  PaymentStatus get status => _status;
+  PaymentStatusUI get status => _status;
 
   Future<void> _initializeMpesaService() async {
     if (_mpesaService != null) return;
@@ -44,122 +42,147 @@ class PaymentProvider with ChangeNotifier {
     } catch (e, s) {
       developer.log('Failed to initialize MpesaService',
           name: 'PaymentProvider', error: e, stackTrace: s);
-      _status = PaymentStatus.failed;
+      _status = PaymentStatusUI.failed;
       notifyListeners();
       rethrow;
     }
   }
 
   Future<void> fetchPayments(String userId) async {
-    _status = PaymentStatus.loading;
+    _status = PaymentStatusUI.loading;
     notifyListeners();
     try {
-      // Uses getPaymentHistory to fetch all payments for a user
       _payments = await _paymentService.getPaymentHistory(userId);
     } catch (e, s) {
       developer.log('Error fetching payment history',
           name: 'PaymentProvider', error: e, stackTrace: s);
       _payments = [];
     } finally {
-      _status = PaymentStatus.idle;
+      _status = PaymentStatusUI.idle;
       notifyListeners();
     }
   }
 
-  Future<PaymentStatus> initiatePayment({
+  Future<PaymentStatusUI> initiatePayment({
     required double amount,
     required String phoneNumber,
     required LoanProvider loanProvider,
     required String userId,
-    Loan? loan,
+    required String loanId,
     double? loanAmount,
     int? repaymentDays,
+    required double interestRate,
   }) async {
-    _status = PaymentStatus.loading;
+    _status = PaymentStatusUI.loading;
     notifyListeners();
 
-    final completer = Completer<PaymentStatus>();
+    final completer = Completer<PaymentStatusUI>();
 
     try {
       await _initializeMpesaService();
-
-      final loanId =
-          loan?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
 
       final checkoutRequestId = await _mpesaService!.initiateStkPush(
         amount: amount,
         phoneNumber: phoneNumber,
         accountReference: loanId,
         transactionDesc:
-            loan != null ? 'Loan Repayment' : 'Loan Application Fee',
+            loanAmount != null ? 'Loan Application Fee' : 'Loan Repayment',
       );
 
-      // If this is a new loan, create the records in the database
-      if (loan == null) {
+      final merchantRequestId = checkoutRequestId;
+
+      if (loanAmount != null && repaymentDays != null) {
         await loanProvider.createLoanAndPayment(
           userId: userId,
           loanId: loanId,
-          amount: loanAmount!,
-          interestRate: 0.2, // Example interest
-          interestAmount: loanAmount * 0.2, // Example interest amount
-          repaymentDate: DateTime.now().add(Duration(days: repaymentDays!)),
-          checkoutRequestId: checkoutRequestId,
+          amount: loanAmount,
+          interestRate: interestRate, // Correct interest rate
+          interestAmount: loanAmount * interestRate * repaymentDays, // Correct interest amount
+          repaymentDate: DateTime.now().add(Duration(days: repaymentDays)),
+          checkoutRequestId: checkoutRequestId, // Save the correct ID
+          merchantRequestId: merchantRequestId,
+        );
+      } else {
+        await _paymentService.createPayment(
+          payment: Payment(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            loanId: loanId,
+            userId: userId,
+            amount: amount,
+            status: 'initiated',
+            checkoutRequestId: checkoutRequestId,
+            merchantRequestId: merchantRequestId,
+            createdAt: DateTime.now(),
+          ),
         );
       }
 
-      _status = PaymentStatus.initiated;
+      _status = PaymentStatusUI.initiated;
       notifyListeners();
 
-      // Listen for the final status from Firebase RTDB
-      _paymentStatusSubscription =
-          _paymentService.getPaymentStatus(loanId).listen((payment) {
+      _paymentStatusSubscription = _paymentService
+          .getPaymentStatusByMerchantId(merchantRequestId)
+          .listen((payment) {
         if (payment != null && !completer.isCompleted) {
-          if (payment.status == 'paid') {
-            _status = PaymentStatus.paid;
-            completer.complete(PaymentStatus.paid);
-            _paymentStatusSubscription?.cancel();
-          } else if (payment.status == 'failed') {
-            _status = PaymentStatus.failed;
-            completer.complete(PaymentStatus.failed);
+          final paymentStatus = _getPaymentStatusFromString(payment.status);
+
+          if (paymentStatus != PaymentStatusUI.initiated &&
+              paymentStatus != PaymentStatusUI.loading) {
+            _status = paymentStatus;
+            completer.complete(paymentStatus);
             _paymentStatusSubscription?.cancel();
           }
-          // While 'initiated', we keep listening.
           notifyListeners();
         }
       }, onError: (e, s) {
         if (!completer.isCompleted) {
           developer.log('Error in payment status stream',
               name: 'PaymentProvider', error: e, stackTrace: s);
-          _status = PaymentStatus.failed;
-          completer.complete(PaymentStatus.failed);
+          _status = PaymentStatusUI.failed;
+          completer.complete(PaymentStatusUI.failed);
           notifyListeners();
         }
       });
 
-      // Timeout logic in case no final status is received
-      Future.delayed(const Duration(seconds: 90), () {
+      Future.delayed(const Duration(seconds: 120), () {
         if (!completer.isCompleted) {
           _paymentStatusSubscription?.cancel();
-          _status = PaymentStatus.timeout;
+          _status = PaymentStatusUI.timeout;
           notifyListeners();
-          completer.complete(PaymentStatus.timeout);
+          completer.complete(PaymentStatusUI.timeout);
+          _paymentService.updatePaymentStatusByMerchantId(
+              merchantRequestId, 'timeout');
         }
       });
     } catch (e, s) {
       developer.log('Error initiating payment',
           name: 'PaymentProvider', error: e, stackTrace: s);
-      _status = PaymentStatus.failed;
+      _status = PaymentStatusUI.failed;
       notifyListeners();
       if (!completer.isCompleted) {
-        completer.complete(PaymentStatus.failed);
+        completer.complete(PaymentStatusUI.failed);
       }
     }
-    // Return the future that will complete with the final status
     return completer.future;
   }
 
+  PaymentStatusUI _getPaymentStatusFromString(String status) {
+    switch (status.toLowerCase()) {
+      case 'paid':
+        return PaymentStatusUI.paid;
+      case 'failed':
+        return PaymentStatusUI.failed;
+      case 'cancelled':
+        return PaymentStatusUI.cancelled;
+      case 'timeout':
+        return PaymentStatusUI.timeout;
+      default:
+        return PaymentStatusUI.initiated;
+    }
+  }
+
   void resetStatus() {
-    _status = PaymentStatus.idle;
+    _status = PaymentStatusUI.idle;
     _paymentStatusSubscription?.cancel();
     notifyListeners();
   }

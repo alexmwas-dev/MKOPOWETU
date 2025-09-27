@@ -25,12 +25,14 @@ class _PaymentPageState extends State<PaymentPage>
   late TabController _tabController;
   final ConfigService _configService = ConfigService();
   Future<double>? _loanFeeFuture;
+  String? _loanId;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _loanFeeFuture = _fetchLoanFee();
+    _loanId = widget.loan?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PaymentProvider>(context, listen: false).resetStatus();
     });
@@ -54,7 +56,7 @@ class _PaymentPageState extends State<PaymentPage>
   Widget build(BuildContext context) {
     final paymentProvider = Provider.of<PaymentProvider>(context);
 
-    if (paymentProvider.status == PaymentStatus.paid) {
+    if (paymentProvider.status == PaymentStatusUI.paid) {
       return const PaymentSuccessScreen();
     }
 
@@ -63,7 +65,7 @@ class _PaymentPageState extends State<PaymentPage>
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: paymentProvider.status == PaymentStatus.loading
+          onPressed: paymentProvider.status == PaymentStatusUI.loading
               ? null
               : () =>
                   context.go('/loan/history', extra: {'initialTabIndex': 1}),
@@ -95,17 +97,21 @@ class _PaymentPageState extends State<PaymentPage>
               children: [
                 PaymentTab(
                   loan: widget.loan,
+                  loanId: _loanId!,
                   loanAmount: widget.loanAmount,
                   repaymentDays: widget.repaymentDays,
                   loanFee: loanFee,
                   useCurrentUserPhone: true,
+                  interestRate: 0.002,
                 ),
                 PaymentTab(
                   loan: widget.loan,
+                  loanId: _loanId!,
                   loanAmount: widget.loanAmount,
                   repaymentDays: widget.repaymentDays,
                   loanFee: loanFee,
                   useCurrentUserPhone: false,
+                  interestRate: 0.002,
                 ),
               ],
             );

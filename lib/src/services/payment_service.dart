@@ -5,12 +5,10 @@ import 'dart:developer' as developer;
 class PaymentService {
   final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
 
-  Future<void> createPayment(String userId, Payment payment) async {
+  Future<void> createPayment({required Payment payment}) async {
     try {
-      await _dbRef
-          .child('payments')
-          .child(payment.loanId)
-          .set(payment.toJson());
+      // Use a unique ID for each payment record to allow for multiple payments per loan
+      await _dbRef.child('payments').child(payment.id).set(payment.toJson());
     } catch (e, s) {
       developer.log(
         'Error creating payment',
@@ -29,25 +27,19 @@ class PaymentService {
           .orderByChild('userId')
           .equalTo(userId)
           .get();
-      if (snapshot.exists && snapshot.value is Map) {
-        final data = Map<dynamic, dynamic>.from(snapshot.value as Map);
-        return data.entries
-            .map((entry) {
-              if (entry.value is Map) {
-                return Payment.fromJson(
-                    entry.key, Map<String, dynamic>.from(entry.value));
-              } else {
-                return null;
-              }
-            })
-            .where((payment) => payment != null)
-            .cast<Payment>()
-            .toList();
+
+      if (snapshot.exists && snapshot.value != null) {
+        final data = snapshot.value as Map<dynamic, dynamic>;
+        return data.entries.map((entry) {
+          final paymentData = Map<String, dynamic>.from(entry.value);
+          return Payment.fromJson(
+              entry.key, paymentData);
+        }).toList();
       }
       return [];
     } catch (e, s) {
       developer.log(
-        'Error fetching payment history',
+        'Error fetching payment history for user: $userId',
         name: 'PaymentService',
         error: e,
         stackTrace: s,
@@ -56,20 +48,54 @@ class PaymentService {
     }
   }
 
-  Stream<Payment?> getPaymentStatus(String loanId) {
-    return _dbRef.child('payments').child(loanId).onValue.map((event) {
-      if (event.snapshot.exists && event.snapshot.value is Map) {
-        return Payment.fromJson(event.snapshot.key!,
-            Map<String, dynamic>.from(event.snapshot.value as Map));
+  Stream<Payment?> getPaymentStatusByMerchantId(String merchantRequestId) {
+    return _dbRef
+        .child('payments')
+        .orderByChild('merchantRequestId')
+        .equalTo(merchantRequestId)
+        .onValue
+        .map((event) {
+      if (event.snapshot.exists && event.snapshot.value != null) {
+        final data = event.snapshot.value as Map<dynamic, dynamic>;
+        final firstKey = data.keys.first;
+        return Payment.fromJson(
+            firstKey, Map<String, dynamic>.from(data[firstKey]));
       }
       return null;
     }).handleError((e, s) {
       developer.log(
-        'Error in payment status stream for loanId: $loanId',
+        'Error in payment status stream for merchantId: $merchantRequestId',
         name: 'PaymentService',
         error: e,
         stackTrace: s,
       );
     });
+  }
+
+  Future<void> updatePaymentStatusByMerchantId(
+      String merchantRequestId, String newStatus) async {
+    try {
+      final snapshot = await _dbRef
+          .child('payments')
+          .orderByChild('merchantRequestId')
+          .equalTo(merchantRequestId)
+          .get();
+
+      if (snapshot.exists && snapshot.value != null) {
+        final data = snapshot.value as Map<dynamic, dynamic>;
+        final paymentKey = data.keys.first;
+        await _dbRef
+            .child('payments')
+            .child(paymentKey)
+            .update({'status': newStatus});
+      }
+    } catch (e, s) {
+      developer.log(
+        'Error updating payment status for merchantId: $merchantRequestId',
+        name: 'PaymentService',
+        error: e,
+        stackTrace: s,
+      );
+    }
   }
 }

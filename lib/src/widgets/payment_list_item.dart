@@ -8,36 +8,54 @@ class PaymentListItem extends StatelessWidget {
 
   const PaymentListItem({Key? key, required this.payment}) : super(key: key);
 
-  String _getStatusText(PaymentStatus status) {
+  String _getStatusText(String status) {
     switch (status) {
-      case PaymentStatus.paid:
+      case 'paid':
         return 'Paid';
-      case PaymentStatus.failed:
+      case 'failed':
         return 'Failed';
-      case PaymentStatus.initiated:
+      case 'initiated':
         return 'Initiated';
+      case 'cancelled':
+        return 'Cancelled';
+      case 'timeout':
+        return 'Timeout';
+      default:
+        return 'Unknown';
     }
   }
 
-  IconData _getStatusIcon(PaymentStatus status) {
+  IconData _getStatusIcon(String status) {
     switch (status) {
-      case PaymentStatus.paid:
+      case 'paid':
         return Icons.check_circle;
-      case PaymentStatus.failed:
+      case 'failed':
         return Icons.cancel;
-      case PaymentStatus.initiated:
+      case 'initiated':
         return Icons.hourglass_empty;
+      case 'cancelled':
+        return Icons.cancel_outlined;
+      case 'timeout':
+        return Icons.timer_off;
+      default:
+        return Icons.help;
     }
   }
 
-  Color _getStatusColor(PaymentStatus status) {
+  Color _getStatusColor(String status) {
     switch (status) {
-      case PaymentStatus.paid:
+      case 'paid':
         return Colors.green;
-      case PaymentStatus.failed:
+      case 'failed':
         return Colors.red;
-      case PaymentStatus.initiated:
+      case 'initiated':
         return Colors.orange;
+      case 'cancelled':
+        return Colors.grey;
+      case 'timeout':
+        return Colors.blue;
+      default:
+        return Colors.black;
     }
   }
 
@@ -93,7 +111,7 @@ class PaymentListItem extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Date: ${dateFormat.format(payment.date)}',
+                    'Date: ${dateFormat.format(payment.createdAt)}',
                     style: Theme.of(context)
                         .textTheme
                         .bodyMedium
