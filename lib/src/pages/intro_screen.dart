@@ -3,8 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 import 'package:mkopo_wetu/src/widgets/banner_ad_widget.dart';
 import 'package:mkopo_wetu/src/widgets/interstitial_ad_widget.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:permission_handler/permission_handler.dart';
+
 
 class IntroScreen extends StatefulWidget {
   const IntroScreen({super.key});
@@ -20,7 +19,6 @@ class _IntroScreenState extends State<IntroScreen> {
   void initState() {
     super.initState();
     _interstitialAdWidget.loadAd();
-    _requestPermissions();
   }
 
   @override
@@ -29,52 +27,8 @@ class _IntroScreenState extends State<IntroScreen> {
     super.dispose();
   }
 
-  Future<void> _requestPermissions() async {
-    final permissions = [
-      Permission.location,
-      Permission.phone,
-      Permission.sms,
-      Permission.storage,
-    ];
-
-    final statuses = await permissions.request();
-
-    if (statuses.values.every((status) => status.isGranted)) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('permissions_granted', true);
-    } else {
-      _showPermissionDeniedDialog();
-    }
-  }
-
-  void _showPermissionDeniedDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Permissions Required'),
-        content: const Text(
-            'Mkopo Wetu needs these permissions to function correctly. Please enable them in your app settings.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              openAppSettings();
-              Navigator.of(context).pop();
-            },
-            child: const Text('Open Settings'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _onDone() async {
     _interstitialAdWidget.showAdWithCallback(() async {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('intro_seen', true);
       if (mounted) {
         context.go('/login');
       }
